@@ -1,0 +1,342 @@
+[
+  {
+    "chunk_id": "DOC-MAP-01",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 1,
+    "section": "Document Overview & Machine Reference Map",
+    "document_reference": "DOC-MAP-01",
+    "category": "General Reference",
+    "machine": "All",
+    "text": "Vantor Industrial (fictional)\nSample Technical Documentation\nPack\nUser Manual Excerpts, Maintenance & Parts, Troubleshooting Guides, FAQs and\nResolution Procedures\nSYNTHETIC TEST DATA - NOT REAL MANUFACTURER DOCUMENTATION\nThis document is entirely fictional. It was written to test an AI customer-support assistant (speech, sentiment,\ncategorisation and RAG suggestions) before real client manuals are available. Machine models, part numbers,\nerror codes, settings and procedures are invented and must never be used to operate, maintain or repair real\nequipment. It contains no client or manufacturer data.\nMachine\nIndustry\nFictional model\nWP-400\nWoodworking\nCNC Panel Saw\nSC-900\nStone cutting\nBridge Saw\nMC-250\nMetal cutting\nCNC Plasma Cutting Table\nGC-120\nGlass cutting\nAutomatic Glass Cutting Table\nDocument map\nPart\nContent\nSupport category\n1\nUser manual excerpts (startup, settings, normal operation)\nMachine Operation Issues\n2\nMaintenance schedules, parts catalog, ordering and warranty\nMaintenance & Parts\n3\nError codes and symptom tables\nTechnical Troubleshooting\n4\nStep-by-step resolution procedures\nTechnical Troubleshooting /\nMaintenance & Parts\n5\nFrequently asked questions\nMixed"
+  },
+  {
+    "chunk_id": "UM-WP400-1.1.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.1.1 Daily startup procedure",
+    "document_reference": "UM-WP400-1.1.1",
+    "category": "Machine Operation Issues",
+    "machine": "WP-400",
+    "text": "PART 1 - USER MANUAL EXCERPTS\n1.1 WP-400 CNC Panel Saw (Woodworking)\nSection 1.1.1 Daily startup procedure\nDoc ref: UM-WP400-1.1.1  |  Category: Machine Operation Issues  |  Machine: WP-400\n1. Check the compressed-air gauge. Working pressure must read 6.0 bar (0.6 MPa). Do not start below 5.5 bar.\n2. Inspect the main saw blade for missing teeth, cracks or resin build-up. Replace a damaged blade before use.\n3. Turn the main isolator to ON. The controller boots in about 45 seconds.\n4. Press HOME. All axes (X, Y, blade height) must complete homing without alarm.\n5. Start the dust extraction. The blade cannot start while extraction is off (interlock).\n6. Load a cutting program and run one test cut on scrap before production."
+  },
+  {
+    "chunk_id": "UM-WP400-1.1.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.1.2 Selecting feed rate and spindle speed",
+    "document_reference": "UM-WP400-1.1.2",
+    "category": "Machine Operation Issues",
+    "machine": "WP-400",
+    "text": "Section 1.1.2 Selecting feed rate and spindle speed\nDoc ref: UM-WP400-1.1.2  |  Category: Machine Operation Issues  |  Machine: WP-400\nUse the table as a starting point. If the cut edge chips, reduce the feed rate by 10-20% before changing anything\nelse.\nMaterial\nThickness\nSpindle speed\nFeed rate\nMelamine chipboard\n18 mm\n4000 rpm\n20 m/min\nMDF\n18 mm\n4000 rpm\n18 m/min\nPlywood\n12 mm\n4000 rpm\n22 m/min\nSolid hardwood\n30 mm\n3500 rpm\n8 m/min"
+  },
+  {
+    "chunk_id": "UM-WP400-1.1.3",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.1.3 Dust extraction",
+    "document_reference": "UM-WP400-1.1.3",
+    "category": "Machine Operation Issues",
+    "machine": "WP-400",
+    "text": "Section 1.1.3 Dust extraction\nDoc ref: UM-WP400-1.1.3  |  Category: Machine Operation Issues  |  Machine: WP-400\nMinimum air velocity at the saw hood is 20 m/s. The controller raises alarm E-102 when the filter pressure drop\nexceeds 1200 Pa. Clean or replace the filter cartridge WP4-FL-DE1 when the alarm appears. Never bypass the\nextraction interlock."
+  },
+  {
+    "chunk_id": "UM-SC900-1.2.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.2.1 Startup and water supply",
+    "document_reference": "UM-SC900-1.2.1",
+    "category": "Machine Operation Issues",
+    "machine": "SC-900",
+    "text": "1.2 SC-900 Bridge Saw (Stone)\nSection 1.2.1 Startup and water supply\nDoc ref: UM-SC900-1.2.1  |  Category: Machine Operation Issues  |  Machine: SC-900\n1. Open the water supply valve. Minimum flow is 8 L/min at 2 bar. Never run the blade dry.\n2. Confirm the flow indicator on the operator panel is green.\n3. Clamp the slab and check that it is fully supported underneath.\n4. Switch on the spindle and wait 10 seconds for full speed, then lower the bridge."
+  },
+  {
+    "chunk_id": "UM-SC900-1.2.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.2.2 Making a straight cut in slab",
+    "document_reference": "UM-SC900-1.2.2",
+    "category": "Machine Operation Issues",
+    "machine": "SC-900",
+    "text": "Section 1.2.2 Making a straight cut in slab\nDoc ref: UM-SC900-1.2.2  |  Category: Machine Operation Issues  |  Machine: SC-900\nSet the blade depth 5 mm below the slab thickness. Recommended cutting speeds: granite 30 mm at 1.2 m/min,\nmarble 30 mm at 2.0 m/min. For slabs thicker than 40 mm make two passes of equal depth. Slow down when the\nblade exits the slab to avoid chipping the underside."
+  },
+  {
+    "chunk_id": "UM-MC250-1.3.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 2,
+    "section": "Section 1.3.1 Startup and gas supply",
+    "document_reference": "UM-MC250-1.3.1",
+    "category": "Machine Operation Issues",
+    "machine": "MC-250",
+    "text": "1.3 MC-250 CNC Plasma Cutting Table (Metal)\nSection 1.3.1 Startup and gas supply\nDoc ref: UM-MC250-1.3.1  |  Category: Machine Operation Issues  |  Machine: MC-250\nThe plasma supply needs clean, dry compressed air at 6.2 bar (90 psi). Drain the filter bowl daily. Attach the work\n(ground) clamp directly to clean bare metal on the plate; paint and rust prevent a stable arc. Switch on the power\nsource, wait for the READY lamp, then home the torch height controller (THC)."
+  },
+  {
+    "chunk_id": "UM-MC250-1.3.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 3,
+    "section": "Section 1.3.2 Cut settings",
+    "document_reference": "UM-MC250-1.3.2",
+    "category": "Machine Operation Issues",
+    "machine": "MC-250",
+    "text": "Section 1.3.2 Cut settings\nDoc ref: UM-MC250-1.3.2  |  Category: Machine Operation Issues  |  Machine: MC-250\nPierce height is 3.8 mm and pierce delay 0.4 s for mild steel. The THC arc-voltage target is 125 V.\nMild steel\nCurrent\nCut speed\nCut height\n3 mm\n45 A\n4500 mm/min\n1.5 mm\n6 mm\n65 A\n3000 mm/min\n1.5 mm\n10 mm\n85 A\n1700 mm/min\n1.5 mm\n16 mm\n105 A\n900 mm/min"
+  },
+  {
+    "chunk_id": "UM-GC120-1.4.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 3,
+    "section": "Section 1.4.1 Loading and scoring",
+    "document_reference": "UM-GC120-1.4.1",
+    "category": "Machine Operation Issues",
+    "machine": "GC-120",
+    "text": "1.5 mm\n1.4 GC-120 Automatic Glass Cutting Table (Glass)\nSection 1.4.1 Loading and scoring\nDoc ref: UM-GC120-1.4.1  |  Category: Machine Operation Issues  |  Machine: GC-120\nThe GC-120 handles sheet glass 3-12 mm thick. Set the scoring pressure for the thickness: 4 mm = 2.2 bar, 6 mm\n= 3.0 bar, 10 mm = 4.2 bar. Keep the cutting-oil level above the MIN mark. Vacuum pressure must read at least\n-0.6 bar before scoring."
+  },
+  {
+    "chunk_id": "UM-GC120-1.4.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 3,
+    "section": "Section 1.4.2 Break-out and edge quality",
+    "document_reference": "UM-GC120-1.4.2",
+    "category": "Machine Operation Issues",
+    "machine": "GC-120",
+    "text": "Section 1.4.2 Break-out and edge quality\nDoc ref: UM-GC120-1.4.2  |  Category: Machine Operation Issues  |  Machine: GC-120\nBreak the sheet within 30 seconds of scoring; the score line loses effect as the glass relaxes. A clean score is thin\nand continuous. Shells or flares along the edge mean the wheel is worn or the pressure is too high."
+  },
+  {
+    "chunk_id": "MP-ALL-2.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 4,
+    "section": "Section 2.1 Maintenance schedules",
+    "document_reference": "MP-ALL-2.1",
+    "category": "Maintenance & Parts",
+    "machine": "All",
+    "text": "PART 2 - MAINTENANCE & PARTS\nSection 2.1 Maintenance schedules\nDoc ref: MP-ALL-2.1  |  Category: Maintenance & Parts  |  Machine: All\nMachine\nDaily\nWeekly\nMonthly / by hours\nWP-400\nClean dust from table and rails.\nCheck air pressure (6.0 bar).\nInspect blade.\nGrease linear rails with grease\nLG-2 (WP4-GR-LG2): 2\npumps per carriage.\nCheck spindle belt tension and clean\nextraction filter. Replace spindle belt\nWP4-BT-85 every 500 hours.\nSC-900\nFlush slurry from the tray. Check\nblade flange for damage.\nClean water filter element\nSC9-WF-02.\nGrease bridge rails. Check blade\nflange runout (limit 0.1 mm). Replace\nspindle bearings SC9-BR-6207 every\n1000 hours.\nMC-250\nDrain air filter bowl. Inspect\nconsumables.\nClean rails and rack. Check\nground clamp cable.\nInspect torch lead. Replace air filter\nelement MC2-AF-10 every 6 months.\nGC-120\nWipe table. Check oil level and\nvacuum pressure.\nClean the scoring head.\nLubricate guide rails. Replace scoring\nwheel after about 5000 m of scoring\nor when edge quality drops."
+  },
+  {
+    "chunk_id": "MP-ALL-2.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 4,
+    "section": "Section 2.2 Lubrication",
+    "document_reference": "MP-ALL-2.2",
+    "category": "Maintenance & Parts",
+    "machine": "All",
+    "text": "Section 2.2 Lubrication\nDoc ref: MP-ALL-2.2  |  Category: Maintenance & Parts  |  Machine: All\nUse only the lubricants named here. Do not mix greases. WP-400 and SC-900 rails: grease LG-2. GC-120 guide\nrails: light machine oil. Never lubricate plasma torch parts with petroleum grease; use silicone grease on torch\nO-rings only."
+  },
+  {
+    "chunk_id": "MP-ALL-2.3",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 4,
+    "section": "Section 2.3 Parts catalog",
+    "document_reference": "MP-ALL-2.3",
+    "category": "Maintenance & Parts",
+    "machine": "All",
+    "text": "Section 2.3 Parts catalog\nDoc ref: MP-ALL-2.3  |  Category: Maintenance & Parts  |  Machine: All\nPart No.\nDescription\nFits\nReplace when\nWP4-BL-300\nSaw blade 300 mm, 72 teeth, carbide\nWP-400\nEdge chipping or about every\n80-120 hours\nWP4-BL-120\nScoring blade 120 mm\nWP-400\nScore line ragged or after 150 hours\nWP4-BT-85\nSpindle drive belt\nWP-400\nEvery 500 hours or if cracked\nWP4-FL-DE1\nDust extraction filter cartridge\nWP-400\nAlarm E-102 or every 3 months\nWP4-GR-LG2\nLinear rail grease LG-2 cartridge\nWP-400, SC-900\nUsed weekly\nSC9-DB-350\nDiamond blade 350 mm, segmented,\ngranite\nSC-900\nSegments below 3 mm height\nSC9-DB-400\nDiamond blade 400 mm, segmented,\nmarble\nSC-900\nSegments below 3 mm height\nSC9-WF-02\nWater filter element\nSC-900\nAlarm F-01 or monthly\nSC9-BR-6207\nSpindle bearing 6207 (pair)\nSC-900\nEvery 1000 hours or noise\nSC9-SL-90\nWater seal kit\nSC-900\nWater leak at spindle\nMC2-EL-65\nElectrode, 65 A\nMC-250\nPit depth reaches 1.5 mm\nMC2-NZ-65\nNozzle, 65 A\nMC-250\nOrifice oval or damaged\nMC2-SH-65\nShield cap, 65 A\nMC-250\nSpatter damage\nMC2-SW-65\nSwirl ring, 65 A\nMC-250\nReplace with every electrode\nchange if cracked\nMC2-AF-10\nAir filter element\nMC-250\nEvery 6 months\nMC2-TH-HT\nTorch height sensor\nMC-250\nError P-22 persists\nGC1-SW-6\nScoring wheel, carbide, 6 mm series\nGC-120\nAbout 5000 m or poor edge\nPart No.\nDescription\nFits\nReplace when\nGC1-OL-1L\nCutting oil, 1 litre\nGC-120\nOil below MIN mark\nGC1-BP-04\nBreak-out bar pad\nGC-120\nPad worn or cut\nGC1-VB-02\nVacuum table seal strip\nGC-120\nAlarm G-03 and no other cause"
+  },
+  {
+    "chunk_id": "MP-ALL-2.4",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 5,
+    "section": "Section 2.4 Ordering parts and warranty",
+    "document_reference": "MP-ALL-2.4",
+    "category": "Maintenance & Parts",
+    "machine": "All",
+    "text": "Section 2.4 Ordering parts and warranty\nDoc ref: MP-ALL-2.4  |  Category: Maintenance & Parts  |  Machine: All\nOrder parts through your authorised distributor and quote the machine model, serial number and part number from\nSection 2.3. Wear parts (blades, electrodes, nozzles, scoring wheels, filters, belts) are consumables and are not\ncovered by warranty. Other replacement parts carry a 12-month warranty from the invoice date. Standard parts\nship within 5 working days; diamond blades and spindle bearings may take up to 10 working days."
+  },
+  {
+    "chunk_id": "TS-WP400-3.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 6,
+    "section": "Section 3.1 WP-400 error codes",
+    "document_reference": "TS-WP400-3.1",
+    "category": "Technical Troubleshooting",
+    "machine": "WP-400",
+    "text": "PART 3 - TECHNICAL TROUBLESHOOTING\nSection 3.1 WP-400 error codes\nDoc ref: TS-WP400-3.1  |  Category: Technical Troubleshooting  |  Machine: WP-400\nCode\nMeaning\nLikely cause\nAction\nE-101\nAir pressure low (below 5.0\nbar)\nCompressor off, supply valve\nclosed, regulator drift\nCheck compressor and valve. Set regulator to 6.0\nbar. Alarm clears above 5.5 bar.\nE-102\nDust extraction fault\nFilter blocked (pressure drop above\n1200 Pa) or fan stopped\nClean or replace cartridge WP4-FL-DE1. Check\nfan breaker.\nE-205\nSpindle overload\nDull blade, feed too high, slack belt\nReduce feed rate. Replace blade WP4-BL-300.\nCheck belt tension (Section 2.1).\nE-206\nBlade vibration / imbalance\n(above 4.5 mm/s)\nDamaged blade, dirty flange, loose\narbor nut\nStop at once. Inspect blade and flanges. Replace\nblade per Section 4.1. Retighten nut to 60 Nm.\nE-310\nY-axis following error\nDry rails, obstruction, encoder cable\nfault\nClear obstruction, grease rails (LG-2), check\nencoder cable. Recalibrate per Section 4.5 if it\nrepeats.\nE-311\nX-axis home switch not\nfound\nSwitch dirty or misaligned\nClean switch and check cable.\nE-410\nEmergency-stop circuit\nopen\nE-stop pressed or guard door open\nRelease E-stop, close door, press RESET.\nSymptom guide - WP-400\nSymptom\nCheck\nFix\nEdge chipping on melamine\nBlade condition, feed rate, scoring blade\nalignment\nReplace blade, reduce feed 10-20%, realign scoring\nblade.\nCut sizes drift over the day\nY-axis calibration, belt, rail lubrication\nRecalibrate (Section 4.5) and grease rails.\nMachine will not start\nAir pressure, E-stop, extraction interlock\nClear E-101, E-410 or E-102 first."
+  },
+  {
+    "chunk_id": "TS-SC900-3.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 6,
+    "section": "Section 3.2 SC-900 fault codes",
+    "document_reference": "TS-SC900-3.2",
+    "category": "Technical Troubleshooting",
+    "machine": "SC-900",
+    "text": "Section 3.2 SC-900 fault codes\nDoc ref: TS-SC900-3.2  |  Category: Technical Troubleshooting  |  Machine: SC-900\nCode\nMeaning\nLikely cause\nAction\nF-01\nWater flow low (below 8 L/min)\nClogged filter, valve partly closed,\npump fault\nClean or replace SC9-WF-02. Open valve fully.\nCheck pump.\nF-02\nSpindle stalled / overload\nFeed too fast, glazed blade\nReduce feed. Dress the blade with an abrasive\nblock. Replace if segments are worn (Section\n4.2).\nF-03\nBridge travel limit reached\nSlab positioned past limit\nReposition slab and re-home bridge.\nF-07\nSlurry tray level high\nDrain blocked\nFlush tray and clear drain.\nSymptom guide - SC-900\nSymptom\nCheck\nFix\nBlade wobble or vibration\nFlange runout (limit 0.1 mm), bent blade,\nloose nut\nReplace bent blade, clean flanges, torque nut to 80\nNm.\nBlade glazed, cuts slowly\nWrong blade for the stone, feed too slow\nDress with abrasive block; use correct blade\n(SC9-DB-350 granite).\nChipping on slab underside\nSupport, exit speed\nSupport slab fully and slow down at exit."
+  },
+  {
+    "chunk_id": "TS-MC250-3.3",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 6,
+    "section": "Section 3.3 MC-250 fault codes",
+    "document_reference": "TS-MC250-3.3",
+    "category": "Technical Troubleshooting",
+    "machine": "MC-250",
+    "text": "Section 3.3 MC-250 fault codes\nDoc ref: TS-MC250-3.3  |  Category: Technical Troubleshooting  |  Machine: MC-250\nCode\nMeaning\nLikely cause\nAction\nP-11\nPilot arc failed / no arc\nWorn electrode or nozzle, low air\npressure, poor ground\nReplace consumable set (Section 4.3). Check\n6.2 bar. Clean ground clamp contact.\nP-14\nAir pressure low (below 5.5\nbar)\nSupply issue, blocked filter\nDrain bowl, replace MC2-AF-10, check supply.\nP-22\nTorch height control fault\nSensor not finding plate, damaged\nlead\nCheck lead, replace MC2-TH-HT if fault\npersists.\nSymptom guide - MC-250\nSymptom\nCheck\nFix\nDross on bottom edge\nCut speed, consumable wear\nAdjust speed to table values; replace consumables.\nBevelled cut edge\nTorch squareness, nozzle wear\nSquare the torch; replace nozzle MC2-NZ-65.\nArc goes out mid-cut\nGround clamp, rust or paint on plate,\nspeed too high\nClamp to bare metal, reduce speed."
+  },
+  {
+    "chunk_id": "TS-GC120-3.4",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 7,
+    "section": "Section 3.4 GC-120 alarm codes",
+    "document_reference": "TS-GC120-3.4",
+    "category": "Technical Troubleshooting",
+    "machine": "GC-120",
+    "text": "Section 3.4 GC-120 alarm codes\nDoc ref: TS-GC120-3.4  |  Category: Technical Troubleshooting  |  Machine: GC-120\nCode\nMeaning\nLikely cause\nAction\nG-03\nVacuum pressure low\nWorn seal strip, sheet not fully seated,\npump filter dirty\nReseat sheet, clean pump filter, replace\nGC1-VB-02 if needed.\nG-05\nScoring pressure out of\nrange\nRegulator drift\nReset to the pressure for the glass thickness\n(Section 1.4.1).\nG-08\nCutting oil low\nReservoir below MIN\nRefill with GC1-OL-1L.\nSymptom guide - GC-120\nSymptom\nCheck\nFix\nGlass runs off the score line /\nbreaks unevenly\nWheel wear, pressure too low, delay\nbefore break\nReplace wheel, raise pressure per table, break within\n30 s.\nShells along edge\nPressure too high, damaged wheel\nLower pressure; replace wheel (Section 4.4).\nNo visible score line\nWheel not touching, oil empty\nCheck head height and refill oil.\nPART 4 - RESOLUTION PROCEDURES\nSAFETY: Before any maintenance or blade/consumable change, switch the machine off, lock out the main\nisolator per your site lock-out/tag-out procedure, and wait until all moving parts have stopped."
+  },
+  {
+    "chunk_id": "RP-WP400-4.1",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 8,
+    "section": "Section 4.1 Replace the WP-400 saw blade",
+    "document_reference": "RP-WP400-4.1",
+    "category": "Technical Troubleshooting / Maintenance & Parts",
+    "machine": "WP-400",
+    "text": "Section 4.1 Replace the WP-400 saw blade\nDoc ref: RP-WP400-4.1  |  Category: Technical Troubleshooting / Maintenance & Parts  |  Machine: WP-400\n1. Switch off and lock out the machine. Wait 2 minutes until the spindle has fully stopped.\n2. Open the blade guard and insert the spindle lock pin.\n3. Remove the arbor nut. The WP-400 arbor nut has a left-hand thread.\n4. Remove the outer flange and old blade. Clean both flanges and the arbor.\n5. Fit new blade WP4-BL-300 with the rotation arrow matching the spindle direction.\n6. Refit the outer flange and tighten the arbor nut to 60 Nm.\n7. Remove the lock pin, close the guard, remove lock-out, run at 1000 rpm for 30 seconds, then at full speed.\n8. Reset the blade-hours counter. If E-206 returns, re-inspect the flanges for damage or debris."
+  },
+  {
+    "chunk_id": "RP-SC900-4.2",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 8,
+    "section": "Section 4.2 Replace the SC-900 diamond blade",
+    "document_reference": "RP-SC900-4.2",
+    "category": "Technical Troubleshooting / Maintenance & Parts",
+    "machine": "SC-900",
+    "text": "Section 4.2 Replace the SC-900 diamond blade\nDoc ref: RP-SC900-4.2  |  Category: Technical Troubleshooting / Maintenance & Parts  |  Machine: SC-900\n1. Switch off, lock out, and close the water valve. Raise the bridge fully.\n2. Lock the spindle and remove the flange bolt.\n3. Remove the flange and blade. Check flange faces for burrs; runout limit is 0.1 mm.\n4. Fit the new blade with the arrow in the direction of rotation. Tighten the flange bolt to 80 Nm.\n5. Open the water, confirm 8 L/min, and run without cutting for 1 minute.\n6. Make a first cut at half the normal feed to bed in the blade. Dress with an abrasive block if it glazes."
+  },
+  {
+    "chunk_id": "RP-MC250-4.3",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 8,
+    "section": "Section 4.3 Replace MC-250 torch consumables",
+    "document_reference": "RP-MC250-4.3",
+    "category": "Technical Troubleshooting / Maintenance & Parts",
+    "machine": "MC-250",
+    "text": "Section 4.3 Replace MC-250 torch consumables\nDoc ref: RP-MC250-4.3  |  Category: Technical Troubleshooting / Maintenance & Parts  |  Machine: MC-250\n1. Switch off the power source and disconnect it from the supply; shut off the air.\n2. Unscrew the shield cap, then remove the nozzle, swirl ring and electrode in that order.\n3. Replace the electrode if the pit is 1.5 mm deep. Always fit a matched set (electrode, nozzle, swirl ring, shield).\n4. Lightly coat O-rings with silicone grease only. Do not use petroleum grease.\n5. Refit parts hand-tight; do not use tools on the nozzle or shield.\n6. Restore air at 6.2 bar and make a test cut on scrap."
+  },
+  {
+    "chunk_id": "RP-GC120-4.4",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 8,
+    "section": "Section 4.4 Replace the GC-120 scoring wheel",
+    "document_reference": "RP-GC120-4.4",
+    "category": "Technical Troubleshooting / Maintenance & Parts",
+    "machine": "GC-120",
+    "text": "Section 4.4 Replace the GC-120 scoring wheel\nDoc ref: RP-GC120-4.4  |  Category: Technical Troubleshooting / Maintenance & Parts  |  Machine: GC-120\n1. Switch off and lock out the machine. Move the scoring head to the service position.\n2. Remove the retaining screw and take out the old wheel.\n3. Fit a new wheel GC1-SW-6 and refit the screw finger-tight plus a quarter turn.\n4. Switch on, check scoring pressure for the thickness, and make a test score on 4 mm scrap.\n5. Break the test piece within 30 seconds. The edge should be clean without shells."
+  },
+  {
+    "chunk_id": "RP-WP400-4.5",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 8,
+    "section": "Section 4.5 Recalibrate the WP-400 Y-axis",
+    "document_reference": "RP-WP400-4.5",
+    "category": "Technical Troubleshooting",
+    "machine": "WP-400",
+    "text": "Section 4.5 Recalibrate the WP-400 Y-axis\nDoc ref: RP-WP400-4.5  |  Category: Technical Troubleshooting  |  Machine: WP-400\n1. Make sure rails are lubricated (grease LG-2) and the table is clear.\n2. Home all axes, then open Diagnostics > Axis Calibration.\n3. Make a 1000 mm test cut on scrap panel.\n4. Measure the cut with a calibrated rule and enter the measured value.\n5. Accept if the deviation is within 0.2 mm over 1000 mm. Otherwise repeat once; if it still fails, check the Y-axis\nbelt and encoder cable."
+  },
+  {
+    "chunk_id": "FAQ-ALL-5",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "PART 5 - FREQUENTLY ASKED QUESTIONS",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Mixed",
+    "machine": "All",
+    "text": "PART 5 - FREQUENTLY ASKED QUESTIONS\nDoc ref: FAQ-ALL-5  |  Category: Mixed  |  Machine: All\n[WP-400] Q: Why do I get E-101 right after restarting the compressor?\nA: The tank is still filling. E-101 clears when pressure rises above 5.5 bar; wait and press RESET.\n[WP-400] Q: How often should I change the saw blade?\nA: Typically every 80-120 operating hours, or sooner if edges chip. See the parts table in Section 2.3.\n[WP-400] Q: Can I run the saw with the extraction off for a quick cut?\nA: No. The interlock prevents blade start and bypassing it is not permitted.\n[SC-900] Q: Can I use dirty or recycled water?\nA: Only if it is filtered. Blocked water filters cause alarm F-01; clean SC9-WF-02 weekly.\n[SC-900] Q: How do I know the diamond blade is worn out?\nA: Segment height below 3 mm, or the blade cuts slowly even after dressing.\n[MC-250] Q: Why does my plasma arc go out halfway through a cut?\nA: Usually a poor ground connection, rust or paint on the plate, or speed set too high.\n[MC-250] Q: Which consumables should I keep in stock?\nA: At least two sets of electrode MC2-EL-65, nozzle MC2-NZ-65, swirl ring MC2-SW-65 and shield MC2-SH-65,\nplus a spare air filter MC2-AF-10.\n[GC-120] Q: Why does the glass break away from the score line?\nA: A worn wheel, low scoring pressure, or waiting more than 30 seconds before breaking.\n[GC-120] Q: Which oil should I use in the scoring head?\nA: Use GC1-OL-1L cutting oil only and keep the level above MIN.\n[All] Q: Are blades and nozzles covered by warranty?\nA: No. They are consumables. Other parts have a 12-month warranty (Section 2.4)."
+  },
+  {
+    "chunk_id": "FAQ-WP400-01",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Why do I get E-101 right after restartin...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Machine Operation Issues",
+    "machine": "WP-400",
+    "text": "[WP-400] Question: Why do I get E-101 right after restarting the compressor?\nAnswer: The tank is still filling. E-101 clears when pressure rises above 5.5 bar; wait and press RESET."
+  },
+  {
+    "chunk_id": "FAQ-WP400-02",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: How often should I change the saw blade?...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Maintenance & Parts",
+    "machine": "WP-400",
+    "text": "[WP-400] Question: How often should I change the saw blade?\nAnswer: Typically every 80-120 operating hours, or sooner if edges chip. See the parts table in Section 2.3."
+  },
+  {
+    "chunk_id": "FAQ-WP400-03",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Can I run the saw with the extraction of...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Machine Operation Issues",
+    "machine": "WP-400",
+    "text": "[WP-400] Question: Can I run the saw with the extraction off for a quick cut?\nAnswer: No. The interlock prevents blade start and bypassing it is not permitted."
+  },
+  {
+    "chunk_id": "FAQ-SC900-04",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Can I use dirty or recycled water?...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Machine Operation Issues",
+    "machine": "SC-900",
+    "text": "[SC-900] Question: Can I use dirty or recycled water?\nAnswer: Only if it is filtered. Blocked water filters cause alarm F-01; clean SC9-WF-02 weekly."
+  },
+  {
+    "chunk_id": "FAQ-SC900-05",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: How do I know the diamond blade is worn ...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Maintenance & Parts",
+    "machine": "SC-900",
+    "text": "[SC-900] Question: How do I know the diamond blade is worn out?\nAnswer: Segment height below 3 mm, or the blade cuts slowly even after dressing."
+  },
+  {
+    "chunk_id": "FAQ-MC250-06",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Why does my plasma arc go out halfway th...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Technical Troubleshooting",
+    "machine": "MC-250",
+    "text": "[MC-250] Question: Why does my plasma arc go out halfway through a cut?\nAnswer: Usually a poor ground connection, rust or paint on the plate, or speed set too high."
+  },
+  {
+    "chunk_id": "FAQ-MC250-07",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Which consumables should I keep in stock...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Maintenance & Parts",
+    "machine": "MC-250",
+    "text": "[MC-250] Question: Which consumables should I keep in stock?\nAnswer: At least two sets of electrode MC2-EL-65, nozzle MC2-NZ-65, swirl ring MC2-SW-65 and shield MC2-SH-65, plus a spare air filter MC2-AF-10."
+  },
+  {
+    "chunk_id": "FAQ-GC120-08",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Why does the glass break away from the s...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Technical Troubleshooting",
+    "machine": "GC-120",
+    "text": "[GC-120] Question: Why does the glass break away from the score line?\nAnswer: A worn wheel, low scoring pressure, or waiting more than 30 seconds before breaking."
+  },
+  {
+    "chunk_id": "FAQ-GC120-09",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Which oil should I use in the scoring he...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Maintenance & Parts",
+    "machine": "GC-120",
+    "text": "[GC-120] Question: Which oil should I use in the scoring head?\nAnswer: Use GC1-OL-1L cutting oil only and keep the level above MIN."
+  },
+  {
+    "chunk_id": "FAQ-All-10",
+    "source": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+    "page": 10,
+    "section": "FAQ: Are blades and nozzles covered by warran...",
+    "document_reference": "FAQ-ALL-5",
+    "category": "Maintenance & Parts",
+    "machine": "All",
+    "text": "[All] Question: Are blades and nozzles covered by warranty?\nAnswer: No. They are consumables. Other parts have a 12-month warranty (Section 2.4)."
+  }
+]
