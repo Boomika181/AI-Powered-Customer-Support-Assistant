@@ -3,11 +3,11 @@
 A localhost AI-assisted customer support copilot designed for industrial machinery support agents. The system captures live microphone audio from the agent's side, performs real-time speech transcription via AssemblyAI, analyzes customer sentiment, categorizes queries, and provides grounded troubleshooting suggestions retrieved from technical manuals using ChromaDB and Google Gemini Flash.
 
 > [!IMPORTANT]
-> **CURRENT PROJECT STATUS: PHASE 0 ONLY**
+> **CURRENT PROJECT STATUS: PHASE 1 — SLICE 1 ACTIVE**
 > 
-> This repository is currently in **Phase 0 (Setup & Document Preparation)**. Core downstream features (continuous transcription streaming, live sentiment analysis, auto query categorization, grounded suggestion cards, and the web dashboard UI) are scheduled for **Phase 1** and **Phase 2**.
-> 
-> All Phase 0 objectives — environment setup, dependency verification, secure environment variable configuration, local ChromaDB initialization, synthetic technical manual ingestion/chunking/embedding, and microphone frame capture testing — have been implemented and verified.
+> - **Phase 0:** Setup, document ingestion, ChromaDB vector store, and microphone test completed & verified.
+> - **Phase 1 (Slice 1 Implemented):** Audio Capture (`src/audio_capture.py`), AssemblyAI Streaming API v3 (`src/transcription.py`), in-memory `ConversationState`, and Speech Break trigger logic.
+> - **Pending in Phase 1 / 2:** Sentiment analysis, query categorization, grounded RAG suggestions via Gemini Flash, and web dashboard UI.
 
 ---
 
@@ -233,6 +233,94 @@ Covered Industrial Machines:
 
 ---
 
+## Phase 1 — Real-Time Transcription (Slice 1)
+
+### Architecture of this Slice
+```
+Agent Microphone (Local Hardware)
+        │
+        ▼ (sounddevice InputStream, callback queue)
+Raw Audio Frames (16000 Hz, mono, 16-bit PCM: pcm_s16le)
+        │
+        ▼ (Streaming bytes over WebSocket)
+AssemblyAI Streaming API v3 (RealTimeTranscriber)
+        │
+        ├── Partial Transcripts (end_of_turn = False) ──► In-progress console display
+        │
+        └── Final Transcripts (end_of_turn = True) ────► In-memory ConversationState
+                                                                   │
+                                                                   ▼
+                                                       SPEECH BREAK TRIGGER HOOK
+                                           ("Ready for downstream processing")
+```
+
+### Key Technical Characteristics
+1. **Zero Disk Storage:** Audio PCM frames stream directly from the `AudioCapture` generator over WebSocket into AssemblyAI without ever writing a byte to disk.
+2. **Ephemeral In-Memory State:** `ConversationState` holds session ID, timestamped segments, speaker labels, and clean transcript text in RAM. No database is created.
+3. **Speech Break Detection:** AssemblyAI v3 dispatches a `TurnEvent`. When `end_of_turn == True`, the turn is finalized, stored in `ConversationState`, and triggers the registered downstream processing callback.
+4. **Clean Shutdown:** Captures `SIGINT` (Ctrl+C), closes microphone hardware via `sounddevice.InputStream.close()`, and terminates the AssemblyAI session with `transcriber.disconnect(terminate=True)`.
+
+### Environment Configuration
+Ensure `.env` contains your AssemblyAI API key:
+```ini
+ASSEMBLYAI_API_KEY=your_actual_assemblyai_key_here
+```
+
+### Execution Commands
+
+#### 1. Test Microphone Audio Capture Independently
+```bash
+python scripts/test_microphone.py
+```
+
+#### 2. Run Real-Time AssemblyAI Streaming Transcription
+```bash
+python -m src.transcription
+```
+
+#### 3. Run Unit Tests (No API Key Required)
+```bash
+python -m unittest tests/test_transcription.py
+```
+
+### Expected Output
+When running `python -m src.transcription` with an active key:
+```
+=================================================================
+CUSTOMER SUPPORT ASSISTANT — LIVE TRANSCRIPTION (PHASE 1 - SLICE 1)
+=================================================================
+
+Starting microphone...
+Microphone: MacBook Air Microphone
+Connecting to AssemblyAI Streaming API...
+Listening... (Speak into microphone. Press Ctrl+C to stop)
+
+[customer] My machine is showing error E-102
+[customer] and the dust extraction has stopped.
+
+FINAL TRANSCRIPT:
+[customer] My machine is showing error E-102 and the dust extraction has stopped.
+
+SPEECH BREAK DETECTED
+Conversation state updated.
+Ready for downstream processing.
+```
+
+*(Note: If `ASSEMBLYAI_API_KEY` is not yet set in `.env`, `python -m src.transcription` displays a configuration reminder and runs an offline state machine verification confirming speech-break routing and conversation state).*
+
+### Known Limitations in Slice 1
+- **Diarization Attribution:** Single-microphone audio uses AssemblyAI single-channel speaker labels. In production multi-party audio, dual-channel audio separation can be enabled.
+- **Network Latency:** AssemblyAI requires stable Internet access for WebSocket streaming.
+
+### Scope Notice: Pending Downstream Features
+As specified in the SOW, the following components are deliberately **not** executed in Slice 1:
+- ❌ Sentiment Analysis via Gemini Flash (Pending Slice 2)
+- ❌ Automatic Query Categorization via Gemini Flash (Pending Slice 2)
+- ❌ Grounded RAG Suggestions via ChromaDB & Gemini (Pending Slice 3)
+- ❌ HTML/CSS/JavaScript Dashboard UI (Pending Phase 2)
+
+---
+
 ## Security & Confidentiality Notes
 
 - **Confidential Engagement:** This project is part of a confidential Mirai Labs engagement under NDA. Do not publish, share, or push this repository to public remotes.
@@ -242,15 +330,14 @@ Covered Industrial Machines:
 
 ---
 
-## What Remains for Phase 1 & Phase 2
+## Phase 1 & Phase 2 Roadmap
 
-- **Phase 1 (Core Functionality):**
-  - Implement `src/audio_capture.py` continuous stream generator.
-  - Implement `src/transcription.py` with AssemblyAI streaming WebSocket and speech break detection (`FinalTranscript`).
-  - Implement `src/sentiment_analysis.py` using Gemini Flash prompt.
-  - Implement `src/llm_suggestions.py` with grounded RAG suggestions and document citations.
-  - End-to-end command-line simulation.
-- **Phase 2 (Dashboard & Integration):**
-  - Implement HTML/CSS/JavaScript dashboard.
-  - Real-time transcript display, sentiment gauge, and suggestion cards.
-  - End-to-end simulated call testing and demo video recording.
+- **Phase 1 — Core Functionality:**
+  - [x] **Slice 1:** Microphone capture, AssemblyAI v3 streaming, in-memory conversation state, speech break trigger.
+  - [ ] **Slice 2:** Sentiment analysis and query categorization modules using Gemini 3.8 Flash.
+  - [ ] **Slice 3:** RAG retrieval and grounded suggestions generator (`src/rag_search.py` + `src/llm_suggestions.py`).
+  - [ ] **Slice 4:** End-to-end command-line simulation linking speech break -> sentiment + RAG -> suggestions.
+- **Phase 2 — Dashboard & Delivery:**
+  - [ ] HTML / CSS / JavaScript agent dashboard interface.
+  - [ ] Real-time transcript display, sentiment gauge, and suggestion card rendering.
+  - [ ] End-to-end simulated call testing and demo video recording.
