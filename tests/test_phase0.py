@@ -44,7 +44,8 @@ class TestPhase0Setup(unittest.TestCase):
         self.assertTrue(chroma_dir.exists(), "ChromaDB directory must exist.")
 
         client = chromadb.PersistentClient(path=str(chroma_dir))
-        col = client.get_collection("technical_documentation")
+        from src.embeddings import GeminiEmbeddingFunction
+        col = client.get_collection("technical_documentation", embedding_function=GeminiEmbeddingFunction())
         count = col.count()
         self.assertGreater(count, 0, "ChromaDB collection should contain stored chunks.")
 

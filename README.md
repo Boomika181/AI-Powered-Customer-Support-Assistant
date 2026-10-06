@@ -43,10 +43,10 @@ Synthetic Technical PDF Manual (Sample_Technical_Documentation_Pack_SYNTHETIC.pd
 Text & Section Extraction (PyMuPDF)
         │
         ▼
-Semantic Section & FAQ Chunking (34 chunks with rich metadata)
+Semantic Section & Table Chunking (PDF + DOCX, rich metadata)
         │
         ▼
-Vector Embeddings (Gemini API / ChromaDB Local ONNX fallback)
+Vector Embeddings (Gemini Embedding 2: gemini-embedding-2, 768 dimensions)
         │
         ▼
 Persistent Local Vector Storage (ChromaDB at ./chroma_db)
@@ -104,10 +104,10 @@ AI-Powered Customer Support Assistant/
 | :--- | :--- | :--- |
 | **Microphone Capture** | `sounddevice` | Streams raw PCM frames in memory. Zero audio files stored on disk. |
 | **Speech-to-Text** | AssemblyAI v3 (Streaming API) | Real-time WebSocket streaming with speaker diarization. |
-| **LLM Inference** | Google Gemini Flash | Fast response (<2s), high accuracy across sentiment, categories, and RAG. |
-| **Embeddings** | Gemini Embeddings (`text-embedding-004`) | Semantic vector representation of document chunks. |
-| **Vector Database** | ChromaDB (Local) | Fully local embedded vector store (`./chroma_db`). Zero cloud setup. |
-| **Document Processing** | `PyMuPDF` (`fitz`) | High-speed PDF text and structural layout extraction. |
+| **LLM Inference** | Google Gemini 3.8 Flash (`gemini-3.8-flash`) | Fast response, high accuracy across sentiment, categories, and RAG suggestions. |
+| **Embeddings** | Gemini Embedding 2 (`gemini-embedding-2`) | Converts documents & queries into 768-dimensional vectors (`output_dimensionality=768`). No local fallback. |
+| **Vector Database** | ChromaDB (Local) | Persistent local vector store (`./chroma_db`) with 768-dim vectors. Zero cloud setup. |
+| **Document Processing** | `PyMuPDF` + `python-docx` | High-speed PDF and DOCX extraction with structured table normalization and page references. |
 | **Backend API** | FastAPI / Uvicorn | Async Python framework running locally on port 5000. |
 | **Frontend Dashboard**| Vanilla HTML / CSS / JavaScript | Lightweight UI displaying live transcripts, sentiment, and suggestion cards. |
 
@@ -145,11 +145,11 @@ ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
 CHROMA_PERSIST_DIRECTORY=./chroma_db
 CHROMA_COLLECTION_NAME=technical_documentation
-EMBEDDING_MODEL=models/text-embedding-004
+GEMINI_EMBEDDING_MODEL=gemini-embedding-2
 ```
 
 > [!NOTE]
-> Ingestion can run locally even before API keys are added by falling back to ChromaDB's local ONNX embedding engine. Once you add your `GEMINI_API_KEY`, re-running the ingestion script automatically generates Gemini embeddings.
+> All document chunks and search queries are embedded using Google Gemini Embedding 2 (`gemini-embedding-2`) at a fixed 768-dimensional vector space. No local MiniLM fallback is used, ensuring strict vector dimensionality consistency across the entire retrieval pipeline.
 
 ---
 

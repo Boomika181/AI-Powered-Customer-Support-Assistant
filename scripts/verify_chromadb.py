@@ -48,7 +48,9 @@ def verify_chromadb():
         print("Please run: python scripts/ingest_documents.py")
         return False
 
-    collection = client.get_collection(COLLECTION_NAME)
+    from src.embeddings import GeminiEmbeddingFunction
+
+    collection = client.get_collection(COLLECTION_NAME, embedding_function=GeminiEmbeddingFunction())
     chunk_count = collection.count()
     print(f"\n[1] Chunk Count: {chunk_count}")
     if chunk_count == 0:

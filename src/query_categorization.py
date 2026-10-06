@@ -1,18 +1,17 @@
 """
-src/sentiment_analysis.py
+src/query_categorization.py
 
-Customer Sentiment Analysis Module using Google Gemini 3.8 Flash.
-Analyzes customer tone and sentiment from support dialogue context into four discrete categories:
-- Positive
-- Neutral
-- Negative
-- Agitated
+Customer Query Categorization Module using Google Gemini 3.8 Flash.
+Classifies support conversation queries into one of the three core SOW categories:
+1. Machine Operation Issues
+2. Maintenance & Parts
+3. Technical Troubleshooting
 
 Key Principles:
 - Uses direct text generation call via google-genai SDK (no response_schema or response_mime_type).
 - Output format enforced via prompt instructions and safely parsed/validated in Python.
 - Strips markdown fences if returned by the model.
-- Strictly classifies the CUSTOMER'S tone, ignoring the support agent's tone.
+- Strictly uses conversation context rather than rigid keyword matching.
 - Zero audio or conversation text written to disk.
 - Never logs or exposes raw API keys.
 """
@@ -31,15 +30,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 from google import genai
-from google.genai import types
 
-logger = logging.getLogger("sentiment_analysis")
+logger = logging.getLogger("query_categorization")
 
-VALID_SENTIMENTS = {"Positive", "Neutral", "Negative", "Agitated"}
+VALID_CATEGORIES = {
+    "Machine Operation Issues",
+    "Maintenance & Parts",
+    "Technical Troubleshooting",
+}
 
 
-class SentimentAnalysisError(ValueError):
-    """Raised when Gemini returns an invalid or malformed sentiment response."""
+class QueryCategorizationError(ValueError):
+    """Raised when Gemini returns an invalid or malformed query categorization response."""
     pass
 
 
@@ -49,12 +51,10 @@ def _strip_markdown_fences(text: str) -> str:
     from the raw response text before JSON parsing.
     """
     cleaned = text.strip()
-    # Check for markdown code fences
     fence_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", cleaned, re.DOTALL)
     if fence_match:
         return fence_match.group(1).strip()
-    
-    # Fallback line-by-line fence stripping
+
     lines = cleaned.splitlines()
     if lines and lines[0].strip().startswith("```"):
         lines = lines[1:]
@@ -63,12 +63,12 @@ def _strip_markdown_fences(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-def analyze_sentiment(
+def classify_query(
     conversation_text: str,
     api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Analyzes customer sentiment using Gemini 3.8 Flash via normal text generation.
+    Classifies a customer support query into one of three standard categories using Gemini 3.8 Flash.
 
     Args:
         conversation_text: The transcript or dialogue history to evaluate.
@@ -76,13 +76,13 @@ def analyze_sentiment(
 
     Returns:
         Dict[str, Any] with:
-            - sentiment: "Positive" | "Neutral" | "Negative" | "Agitated"
+            - category: "Machine Operation Issues" | "Maintenance & Parts" | "Technical Troubleshooting"
             - confidence: float between 0.0 and 1.0
             - rationale: str explaining the classification based strictly on context
 
     Raises:
         ValueError: If conversation_text is empty or if no API key is available.
-        SentimentAnalysisError: If the Gemini response is invalid or malformed.
+        QueryCategorizationError: If the Gemini response is invalid or malformed.
     """
     # 1. Validate input text
     if not conversation_text or not conversation_text.strip():
@@ -104,17 +104,18 @@ def analyze_sentiment(
     model_name = os.getenv("LLM_MODEL", "gemini-3.8-flash")
 
     # 4. Construct prompt requesting ONLY raw JSON
-    prompt = f"""You are an expert customer support tone and sentiment analyzer for industrial machinery support calls.
+    prompt = f"""You are an expert customer support query categorizer for industrial machinery support calls.
 
-Your task is to analyze the CUSTOMER'S tone and sentiment from the conversation below.
-Do NOT classify the support agent's tone. Focus strictly on the customer.
-Use the entire supplied conversation context.
+Your task is to analyze the customer's issue from the conversation below and categorize the query into EXACTLY ONE of the following three categories:
 
-Choose exactly one sentiment label from:
-- Positive: Customer expresses satisfaction, appreciation, relief, approval, or clearly positive language.
-- Neutral: Customer is factual, informational, calm, or emotionally unclear.
-- Negative: Customer expresses dissatisfaction, frustration, disappointment, or a problem without strong hostility.
-- Agitated: Customer shows strong anger, escalation, hostility, repeated frustration, urgency, or highly emotionally charged language.
+1. Machine Operation Issues:
+Questions or problems related to operating, using, configuring, or understanding normal machine operation (e.g., startup procedures, operating modes, selecting feed rates/spindle speeds, operating controls).
+
+2. Maintenance & Parts:
+Issues involving preventive maintenance schedules, servicing routines, replacement parts, consumable wear, ordering spare parts, lubrication, or physical component replacement.
+
+3. Technical Troubleshooting:
+Technical faults, error codes, alarms, diagnostic problems, component failure, machine stalls, overheating, sensor malfunctions, or abnormal behavior requiring troubleshooting procedures.
 
 Conversation:
 \"\"\"
@@ -123,9 +124,9 @@ Conversation:
 
 Return ONLY a valid JSON object with no additional text, markdown, or commentary. Use this exact structure:
 {{
-  "sentiment": "Positive|Neutral|Negative|Agitated",
+  "category": "Machine Operation Issues|Maintenance & Parts|Technical Troubleshooting",
   "confidence": 0.0,
-  "rationale": "short explanation based only on the customer statements"
+  "rationale": "short explanation explaining why this query belongs to the chosen category"
 }}
 """
 
@@ -137,7 +138,7 @@ Return ONLY a valid JSON object with no additional text, markdown, or commentary
 
     for attempt in range(max_retries):
         try:
-            logger.info("Calling Gemini (%s) for sentiment analysis (attempt %d/%d)", model_name, attempt + 1, max_retries)
+            logger.info("Calling Gemini (%s) for query categorization (attempt %d/%d)", model_name, attempt + 1, max_retries)
             response = client.models.generate_content(
                 model=model_name,
                 contents=prompt
@@ -146,7 +147,6 @@ Return ONLY a valid JSON object with no additional text, markdown, or commentary
         except Exception as exc:
             last_error = exc
             err_str = str(exc)
-            # If transient 503 high demand or rate limit, wait and retry
             if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
                 if attempt < max_retries - 1:
                     sleep_time = 2 ** attempt
@@ -154,50 +154,50 @@ Return ONLY a valid JSON object with no additional text, markdown, or commentary
                     time.sleep(sleep_time)
                     continue
             logger.error("Gemini API call failed: %s", exc)
-            raise SentimentAnalysisError(f"Gemini API request failed: {exc}") from exc
+            raise QueryCategorizationError(f"Gemini API request failed: {exc}") from exc
 
     if response is None:
-        raise SentimentAnalysisError(f"Gemini API request failed after {max_retries} attempts: {last_error}")
+        raise QueryCategorizationError(f"Gemini API request failed after {max_retries} attempts: {last_error}")
 
     # 6. Parse and validate response text
     raw_text = getattr(response, "text", None)
     if not raw_text or not raw_text.strip():
-        raise SentimentAnalysisError("Gemini sentiment response was empty.")
+        raise QueryCategorizationError("Gemini query categorization response was empty.")
 
     cleaned_json_text = _strip_markdown_fences(raw_text)
 
     try:
         data = json.loads(cleaned_json_text)
     except json.JSONDecodeError as exc:
-        raise SentimentAnalysisError(f"Gemini sentiment response was invalid JSON: {exc}") from exc
+        raise QueryCategorizationError(f"Gemini query categorization response was invalid JSON: {exc}") from exc
 
     if not isinstance(data, dict):
-        raise SentimentAnalysisError("Gemini sentiment response must be a JSON object.")
+        raise QueryCategorizationError("Gemini query categorization response must be a JSON object.")
 
-    sentiment = data.get("sentiment")
-    if sentiment not in VALID_SENTIMENTS:
-        raise SentimentAnalysisError(
-            f"Invalid sentiment '{sentiment}' returned by Gemini. Must be one of {sorted(VALID_SENTIMENTS)}."
+    category = data.get("category")
+    if category not in VALID_CATEGORIES:
+        raise QueryCategorizationError(
+            f"Invalid category '{category}' returned by Gemini. Must be one of {sorted(VALID_CATEGORIES)}."
         )
 
     confidence = data.get("confidence")
     if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
-        raise SentimentAnalysisError(
+        raise QueryCategorizationError(
             f"Invalid confidence '{confidence}' returned by Gemini. Must be a numeric float."
         )
 
     confidence_val = float(confidence)
     if confidence_val < 0.0 or confidence_val > 1.0:
-        raise SentimentAnalysisError(
+        raise QueryCategorizationError(
             f"Confidence '{confidence_val}' out of bounds. Must be between 0.0 and 1.0."
         )
 
     rationale = data.get("rationale")
     if not isinstance(rationale, str) or not rationale.strip():
-        raise SentimentAnalysisError("Invalid rationale returned by Gemini. Must be a non-empty string.")
+        raise QueryCategorizationError("Invalid rationale returned by Gemini. Must be a non-empty string.")
 
     return {
-        "sentiment": sentiment,
+        "category": category,
         "confidence": round(confidence_val, 4),
         "rationale": rationale.strip()
     }
