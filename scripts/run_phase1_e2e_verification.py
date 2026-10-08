@@ -70,7 +70,7 @@ def run_e2e_verification():
     print("PHASE 1 FEATURE-LEVEL END-TO-END VERIFICATION RUNNER")
     print("=" * 80)
 
-    model_name = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    model_name = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
     print(f"Configured LLM Model : {model_name}")
     api_key = os.getenv("GEMINI_API_KEY", "")
     print(f"API Key Configured   : {'Yes (' + api_key[:6] + '...' + api_key[-4:] + ')' if api_key else 'NO'}")

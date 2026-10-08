@@ -1,0 +1,178 @@
+[
+  {
+    "id": "SS-01",
+    "document": "Vantor",
+    "machine": "WP-400",
+    "customer_query": "Our WP-400 panel saw just threw an E-206 and the blade was shaking badly right before it stopped. What should we do before restarting it?",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "TS-WP400-3.1",
+      "RP-WP400-4.1"
+    ],
+    "expected_topic": "WP-400 alarm E-206 (blade vibration/imbalance): stop, inspect blade and flanges, replace the blade, retighten the arbor nut",
+    "why_this_is_supported": "TS-WP400-3.1 lists E-206 'Blade vibration / imbalance (above 4.5 mm/s)' with causes (damaged blade, dirty flange, loose arbor nut) and the action 'Stop at once. Inspect blade and flanges. Replace blade per Section 4.1. Retighten nut to 60 Nm.' RP-WP400-4.1 gives the blade replacement steps (blade WP4-BL-300, left-hand arbor nut thread, 60 Nm).",
+    "hallucination_risk": "medium"
+  },
+  {
+    "id": "SS-02",
+    "document": "Vantor",
+    "machine": "GC-120",
+    "customer_query": "We're about to run a batch of 6 mm glass on our GC-120. What scoring pressure should we set, and how long can a sheet sit after scoring before we break it?",
+    "expected_category": "Machine Operation Issues",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "UM-GC120-1.4.1",
+      "UM-GC120-1.4.2"
+    ],
+    "expected_topic": "GC-120 scoring pressure for 6 mm glass and the time limit before break-out",
+    "why_this_is_supported": "UM-GC120-1.4.1 gives scoring pressure by thickness (6 mm = 3.0 bar). UM-GC120-1.4.2 says to break the sheet within 30 seconds of scoring because the score line loses effect as the glass relaxes.",
+    "hallucination_risk": "low"
+  },
+  {
+    "id": "SS-03",
+    "document": "Vantor",
+    "machine": "SC-900",
+    "customer_query": "The water filter on our stone saw looks filthy. Which filter do we order for the SC-900, and how often should it be cleaned or replaced?",
+    "expected_category": "Maintenance & Parts",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "MP-ALL-2.3",
+      "MP-ALL-2.1"
+    ],
+    "expected_topic": "SC-900 water filter element SC9-WF-02: part number, cleaning and replacement interval",
+    "why_this_is_supported": "MP-ALL-2.3 lists SC9-WF-02 (water filter element, fits SC-900) to be replaced on 'Alarm F-01 or monthly'. MP-ALL-2.1 schedules weekly cleaning of water filter element SC9-WF-02 for the SC-900.",
+    "hallucination_risk": "medium"
+  },
+  {
+    "id": "SS-04",
+    "document": "Vantor",
+    "machine": "MC-250",
+    "customer_query": "The plasma on our MC-250 keeps going out in the middle of a cut. What should we look at?",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "TS-MC250-3.3",
+      "FAQ-ALL-5"
+    ],
+    "expected_topic": "MC-250 arc extinguishing mid-cut: ground clamp, rust or paint on the plate, cutting speed",
+    "why_this_is_supported": "TS-MC250-3.3 symptom guide: 'Arc goes out mid-cut' - check ground clamp, rust or paint on plate, speed too high; fix: clamp to bare metal, reduce speed. The Vantor FAQ-ALL-5 gives the same answer (poor ground connection, rust or paint, speed too high).",
+    "hallucination_risk": "low"
+  },
+  {
+    "id": "SS-05",
+    "document": "Kestrel",
+    "machine": "WR-700",
+    "customer_query": "Our WR-700 won't start a job and the screen shows R-101. The table doesn't seem to be gripping the sheet properly.",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "TS-WR700-3.1",
+      "OG-WR700-1.1.3"
+    ],
+    "expected_topic": "WR-700 alarm R-101 (table vacuum low): cover unused zones, check gasket, replace vacuum pump filter",
+    "why_this_is_supported": "TS-WR700-3.1 lists R-101 'Table vacuum low (above -0.55 bar)' with causes (open zones, worn gasket, dirty pump filter, small part) and actions (cover unused zones, replace gasket, replace WR7-VF-20; alarm clears below -0.60 bar). OG-WR700-1.1.3 says the controller blocks job start above -0.55 bar and the threshold must never be reduced.",
+    "hallucination_risk": "medium"
+  },
+  {
+    "id": "SS-06",
+    "document": "Kestrel",
+    "machine": "SJ-650",
+    "customer_query": "We keep cracking marble right at the start of the cut on our SJ-650. How should we be starting the cut?",
+    "expected_category": "Machine Operation Issues",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "OG-SJ650-1.2.2",
+      "TS-SJ650-3.2",
+      "FAQ-ALL-5"
+    ],
+    "expected_topic": "SJ-650 low-pressure pierce to avoid cracking stone at the start of a cut",
+    "why_this_is_supported": "OG-SJ650-1.2.2: pierce at a low pressure of 1500 bar for 3 seconds, then ramp to full pressure; a full-pressure pierce can crack or delaminate brittle stone. TS-SJ650-3.2 symptom guide ('The stone cracked at the start of the cut') and the Kestrel FAQ-ALL-5 (marble cracking) give the same fix.",
+    "hallucination_risk": "low"
+  },
+  {
+    "id": "SS-07",
+    "document": "Kestrel",
+    "machine": "MF-180",
+    "customer_query": "Our MF-180 is showing L-05 and it won't pierce the plate properly. What's wrong and how do we fix it?",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "TS-MF180-3.3",
+      "RP-MF180-4.3"
+    ],
+    "expected_topic": "MF-180 alarm L-05 (protective window contaminated) and the window replacement procedure",
+    "why_this_is_supported": "TS-MF180-3.3 lists L-05 'Protective window contaminated' (spatter, burnt-on dirt) with the action to replace MF1-PW-27 (Section 4.3), and the symptom 'Laser does not pierce the plate' (replace window, recalibrate focus, clean rusty or oily surface). RP-MF180-4.3 gives the steps: laser off and locked out, window drawer, clean gloves, marked face towards the source, clear L-05, piercing test on 3 mm mild steel.",
+    "hallucination_risk": "medium"
+  },
+  {
+    "id": "SS-08",
+    "document": "Kestrel",
+    "machine": "GL-300",
+    "customer_query": "How long should a scoring wheel last on our GL-300, and which one do I order when it's worn?",
+    "expected_category": "Maintenance & Parts",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "MP-ALL-2.3",
+      "MP-ALL-2.1",
+      "FAQ-ALL-5"
+    ],
+    "expected_topic": "GL-300 carbide scoring wheel GL3-SW-8: part number and expected life",
+    "why_this_is_supported": "MP-ALL-2.3 lists GL3-SW-8 (carbide scoring wheel, fits GL-300) to be replaced after about 8000 m or poor edge. MP-ALL-2.1 schedules replacement after about 8000 m of scoring. The Kestrel FAQ-ALL-5 answers the same question. (The Vantor GC-120 wheel GC1-SW-6 has a different 5000 m interval and must not be mixed in.)",
+    "hallucination_risk": "medium"
+  },
+  {
+    "id": "SS-09",
+    "document": "Both",
+    "machine": "GC-120 / GL-300",
+    "customer_query": "We run a GC-120 and a GL-300 in the same shop and both are throwing low-vacuum alarms today. What should we check on each machine?",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "TS-GC120-3.4",
+      "TS-GL300-3.4"
+    ],
+    "expected_topic": "Low vacuum alarms on two glass machines: G-03 (GC-120, Vantor) and H-07 (GL-300, Kestrel)",
+    "why_this_is_supported": "Vantor TS-GC120-3.4: G-03 'Vacuum pressure low' - worn seal strip, sheet not fully seated, pump filter dirty; reseat sheet, clean pump filter, replace GC1-VB-02 if needed. Kestrel TS-GL300-3.4: H-07 'Vacuum low (above -0.5 bar)' - sheet not seated, dirty filter, worn seal; reseat the sheet, clean the pump filter, check the seal. The part number GC1-VB-02 belongs to the GC-120 only.",
+    "hallucination_risk": "high"
+  },
+  {
+    "id": "SS-10",
+    "document": "Both",
+    "machine": "MC-250 / MF-180",
+    "customer_query": "Our new operator is learning on the MC-250 plasma table and the MF-180 laser. What needs to be checked on each one before the first cut of the day?",
+    "expected_category": "Machine Operation Issues",
+    "expected_grounded": true,
+    "expected_source_refs": [
+      "UM-MC250-1.3.1",
+      "OG-MF180-1.3.1"
+    ],
+    "expected_topic": "Startup checks for the MC-250 plasma table (Vantor) and the MF-180 fibre laser (Kestrel)",
+    "why_this_is_supported": "Vantor UM-MC250-1.3.1: clean dry compressed air at 6.2 bar, drain the filter bowl daily, ground clamp on clean bare metal, wait for the READY lamp, home the torch height controller. Kestrel OG-MF180-1.3.1: chiller coolant at 22 degrees C and above MIN, open the assist-gas valve (oxygen for mild steel, nitrogen for stainless and aluminium, minimum 16 bar nitrogen), wait for READY, run nozzle centring and height-sensor calibration, make a test cut.",
+    "hallucination_risk": "high"
+  },
+  {
+    "id": "SS-11",
+    "document": "Kestrel",
+    "machine": "WR-700",
+    "customer_query": "What's the part number for the spindle bearing on our WR-700, and how often should it be changed?",
+    "expected_category": "Maintenance & Parts",
+    "expected_grounded": false,
+    "expected_source_refs": [],
+    "expected_topic": "WR-700 spindle bearing part number and interval (not documented); a transparent 'documentation does not provide sufficient information' response is expected",
+    "why_this_is_supported": "NOT SUPPORTED. The Kestrel parts catalogue and schedules list WR-700 parts (collet WR7-CL-12, cutter WR7-TL-06, vacuum filter WR7-VF-20, grease WR7-GR-RG3, tool-length sensor WR7-TS-01) but no spindle bearing. The only spindle bearing in the knowledge base is Vantor SC9-BR-6207, which fits the SC-900 and must not be offered for the WR-700.",
+    "hallucination_risk": "high"
+  },
+  {
+    "id": "SS-12",
+    "document": "Both",
+    "machine": "Press brake (not covered)",
+    "customer_query": "Our press brake keeps losing hydraulic pressure halfway through a bend. What should we check?",
+    "expected_category": "Technical Troubleshooting",
+    "expected_grounded": false,
+    "expected_source_refs": [],
+    "expected_topic": "Press brake hydraulic pressure loss (equipment and hydraulic systems are not documented); a transparent 'documentation does not provide sufficient information' response is expected",
+    "why_this_is_supported": "NOT SUPPORTED. Neither document covers press brakes or hydraulic systems. The machines covered are WP-400, SC-900, MC-250, GC-120 (Vantor) and WR-700, SJ-650, MF-180, GL-300 (Kestrel). Pressure alarms that exist (air pressure E-101/P-14, water pressure F-01/W-10) are for different systems and must not be presented as the answer.",
+    "hallucination_risk": "high"
+  }
+]

@@ -1,7 +1,7 @@
 """
 src/query_categorization.py
 
-Customer Query Categorization Module using Google Gemini 3.8 Flash.
+Customer Query Categorization Module using Google Gemini.
 Classifies support conversation queries into one of the three core SOW categories:
 1. Machine Operation Issues
 2. Maintenance & Parts
@@ -68,7 +68,7 @@ def classify_query(
     api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Classifies a customer support query into one of three standard categories using Gemini 3.8 Flash.
+    Classifies a customer support query into one of three standard categories using Gemini.
 
     Args:
         conversation_text: The transcript or dialogue history to evaluate.
@@ -100,8 +100,8 @@ def classify_query(
     if not resolved_key or resolved_key.startswith("your_"):
         raise ValueError("GEMINI_API_KEY is required but not found in the environment or parameters.")
 
-    # 3. Resolve configured model (defaults to gemini-3.8-flash)
-    model_name = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    # 3. Resolve configured model (defaults to gemini-3.5-flash-lite)
+    model_name = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
 
     # 4. Construct prompt requesting ONLY raw JSON
     prompt = f"""You are an expert customer support query categorizer for industrial machinery support calls.

@@ -57,7 +57,7 @@ def run_live_categorization_tests():
     print("GEMINI 3.8 FLASH QUERY CATEGORIZATION - LIVE API INTEGRATION TEST")
     print("=" * 70)
 
-    model = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    model = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
     api_key = os.getenv("GEMINI_API_KEY", "")
 
     print(f"Configured Model : {model}")

@@ -78,7 +78,7 @@ def run_e2e_pipeline():
     print("Query → Categorization → ChromaDB Retrieval → Gemini 3.8 Flash Suggestion")
     print("=" * 70)
 
-    model = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    model = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
     api_key = os.getenv("GEMINI_API_KEY", "")
 
     print(f"Model: {model}")

@@ -1,7 +1,7 @@
 """
 src/sentiment_analysis.py
 
-Customer Sentiment Analysis Module using Google Gemini 3.8 Flash.
+Customer Sentiment Analysis Module using Google Gemini.
 Analyzes customer tone and sentiment from support dialogue context into four discrete categories:
 - Positive
 - Neutral
@@ -68,7 +68,7 @@ def analyze_sentiment(
     api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Analyzes customer sentiment using Gemini 3.8 Flash via normal text generation.
+    Analyzes customer sentiment using Gemini via normal text generation.
 
     Args:
         conversation_text: The transcript or dialogue history to evaluate.
@@ -100,8 +100,8 @@ def analyze_sentiment(
     if not resolved_key or resolved_key.startswith("your_"):
         raise ValueError("GEMINI_API_KEY is required but not found in the environment or parameters.")
 
-    # 3. Resolve configured model (defaults to gemini-3.8-flash)
-    model_name = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    # 3. Resolve configured model (defaults to gemini-3.5-flash-lite)
+    model_name = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
 
     # 4. Construct prompt requesting ONLY raw JSON
     prompt = f"""You are an expert customer support tone and sentiment analyzer for industrial machinery support calls.

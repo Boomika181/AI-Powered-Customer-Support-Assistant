@@ -1,14 +1,14 @@
 """
 src/llm_suggestions.py
 
-AI-Powered Customer Support Suggestion Generation using Google Gemini 3.8 Flash.
+AI-Powered Customer Support Suggestion Generation using Google Gemini.
 Synthesizes concise, actionable, strictly grounded customer-support suggestions based
 on retrieved knowledge-base chunks from ChromaDB.
 
 Key Principles:
 - Strictly grounded in retrieved context: will NOT invent error codes, part numbers,
   pressures, or repair procedures.
-- Strictly uses Gemini 3.8 Flash via the google-genai SDK. No fallback models.
+- Strictly uses configured Gemini generation model via the google-genai SDK. No fallback models.
 - If retrieved_context is empty, safely returns an ungrounded disclaimer without
   calling Gemini, preventing hallucinations and conserving quota.
 - Preserves industrial safety instructions (lock-out/tag-out, interlocks, eye/ear protection).
@@ -32,6 +32,29 @@ load_dotenv(PROJECT_ROOT / ".env")
 from google import genai
 
 logger = logging.getLogger("llm_suggestions")
+
+# Module-level persistent Gemini client cache
+_shared_client: Optional[genai.Client] = None
+_shared_client_key: Optional[str] = None
+
+
+def get_shared_gemini_client(api_key: Optional[str] = None) -> Optional[genai.Client]:
+    """
+    Returns a shared, persistent genai.Client instance for support suggestion generation.
+    Reuses the client across calls and sessions unless the API key changes.
+    """
+    global _shared_client, _shared_client_key
+    resolved_key = (
+        (api_key or "").strip()
+        or os.getenv("GEMINI_API_KEY", "").strip()
+        or os.getenv("GOOGLE_API_KEY", "").strip()
+    )
+    if not resolved_key or resolved_key.startswith("your_"):
+        return None
+    if _shared_client is None or _shared_client_key != resolved_key:
+        _shared_client = genai.Client(api_key=resolved_key)
+        _shared_client_key = resolved_key
+    return _shared_client
 
 
 class SuggestionGenerationError(ValueError):
@@ -120,16 +143,18 @@ def generate_support_suggestion(
     conversation_text: str,
     retrieved_context: List[Dict[str, Any]],
     category: Optional[str] = None,
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
+    client: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
-    Generates a concise, strictly grounded customer-support suggestion using Gemini 3.8 Flash.
+    Generates a concise, strictly grounded customer-support suggestion using Gemini.
 
     Args:
         conversation_text: Customer conversation or query text.
         retrieved_context: List of retrieved chunks from ChromaDB (search_knowledge_base).
         category: Optional detected query category.
         api_key: Optional Google Gemini API key. Defaults to GEMINI_API_KEY from environment.
+        client: Optional pre-configured genai.Client instance. If None, uses shared persistent client.
 
     Returns:
         Dict[str, Any] with:
@@ -170,11 +195,11 @@ def generate_support_suggestion(
             or os.getenv("GOOGLE_API_KEY", "").strip()
         )
 
-    if not resolved_key or resolved_key.startswith("your_"):
+    if client is None and (not resolved_key or resolved_key.startswith("your_")):
         raise ValueError("GEMINI_API_KEY is required but not found in the environment or parameters.")
 
-    # 4. Resolve configured model (enforces gemini-3.8-flash)
-    model_name = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    # 4. Resolve configured model (defaults to gemini-3.5-flash-lite)
+    model_name = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
 
     # 5. Format context and prompt
     context_str = _format_context_for_prompt(retrieved_context)
@@ -211,7 +236,7 @@ Return ONLY a valid JSON object with no additional text or commentary using this
 """
 
     # 6. Execute Gemini call with retries for transient errors
-    client = genai.Client(api_key=resolved_key)
+    gemai_client = client or get_shared_gemini_client(api_key=resolved_key) or genai.Client(api_key=resolved_key)
     max_retries = 3
     last_error = None
     response = None
@@ -219,7 +244,7 @@ Return ONLY a valid JSON object with no additional text or commentary using this
     for attempt in range(max_retries):
         try:
             logger.info("Calling Gemini (%s) for suggestion generation (attempt %d/%d)", model_name, attempt + 1, max_retries)
-            response = client.models.generate_content(
+            response = gemai_client.models.generate_content(
                 model=model_name,
                 contents=prompt
             )
@@ -282,7 +307,8 @@ Return ONLY a valid JSON object with no additional text or commentary using this
 def generate_suggestions(
     query_text: str,
     retrieved_chunks: List[Dict[str, Any]],
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
+    client: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     Backward-compatible wrapper for Phase 1 suggestions generation.
@@ -290,5 +316,7 @@ def generate_suggestions(
     return generate_support_suggestion(
         conversation_text=query_text,
         retrieved_context=retrieved_chunks,
-        api_key=api_key
+        api_key=api_key,
+        client=client
     )
+

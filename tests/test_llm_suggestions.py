@@ -13,6 +13,7 @@ from unittest.mock import patch, MagicMock
 from src.llm_suggestions import (
     generate_support_suggestion,
     generate_suggestions,
+    get_shared_gemini_client,
     SuggestionGenerationError,
 )
 
@@ -20,6 +21,9 @@ from src.llm_suggestions import (
 class TestLLMSuggestions(unittest.TestCase):
 
     def setUp(self):
+        import src.llm_suggestions
+        src.llm_suggestions._shared_client = None
+        src.llm_suggestions._shared_client_key = None
         self.sample_context = [
             {
                 "text": (
@@ -50,7 +54,7 @@ class TestLLMSuggestions(unittest.TestCase):
     # 1. Valid Suggestion Generation & Model Verification
     # --------------------------------------------------------------------------
     @patch("src.llm_suggestions.genai.Client")
-    @patch.dict(os.environ, {"LLM_MODEL": "gemini-3.8-flash"})
+    @patch.dict(os.environ, {"GEMINI_MODEL": "gemini-3.5-flash-lite"})
     def test_valid_suggestion_generation(self, mock_client_cls):
         mock_client = self._create_mock_client(json.dumps({
             "suggestion": (
@@ -77,9 +81,9 @@ class TestLLMSuggestions(unittest.TestCase):
         self.assertTrue(res["is_grounded"])
         self.assertEqual(res["category"], "Technical Troubleshooting")
 
-        # Verify model name used was gemini-3.8-flash
+        # Verify model name used was gemini-3.5-flash-lite
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        self.assertEqual(call_kwargs["model"], "gemini-3.8-flash")
+        self.assertEqual(call_kwargs["model"], "gemini-3.5-flash-lite")
         self.assertNotIn("config", call_kwargs)  # no structured output config
 
     # --------------------------------------------------------------------------
@@ -286,6 +290,75 @@ class TestLLMSuggestions(unittest.TestCase):
             api_key="test-gemini-key"
         )
         self.assertEqual(res["suggestion"], "Wrapper test.")
+
+    def tearDown(self):
+        import src.llm_suggestions
+        src.llm_suggestions._shared_client = None
+        src.llm_suggestions._shared_client_key = None
+
+    # --------------------------------------------------------------------------
+    # 10. Persistent Gemini Client Reuse & Injection
+    # --------------------------------------------------------------------------
+    def test_get_shared_gemini_client_caching(self):
+        """Verifies get_shared_gemini_client creates once and returns the same client on repeated calls."""
+        with patch("src.llm_suggestions.genai.Client") as mock_genai_ctor:
+            fake_client = MagicMock()
+            mock_genai_ctor.return_value = fake_client
+
+            client_a = get_shared_gemini_client(api_key="test_shared_key_12345")
+            client_b = get_shared_gemini_client(api_key="test_shared_key_12345")
+
+            self.assertIs(client_a, client_b)
+            self.assertEqual(mock_genai_ctor.call_count, 1)
+
+    def test_two_suggestion_calls_reuse_shared_client(self):
+        """Verifies two consecutive suggestion calls without an injected client reuse the shared client."""
+        with patch("src.llm_suggestions.genai.Client") as mock_genai_ctor:
+            fake_client = self._create_mock_client(json.dumps({
+                "suggestion": "Test procedure.",
+                "confidence": 0.95,
+                "is_grounded": True
+            }))
+            mock_genai_ctor.return_value = fake_client
+
+            res1 = generate_support_suggestion(
+                conversation_text="First query",
+                retrieved_context=self.sample_context,
+                api_key="test-shared-key-reuse"
+            )
+            res2 = generate_support_suggestion(
+                conversation_text="Second query",
+                retrieved_context=self.sample_context,
+                api_key="test-shared-key-reuse"
+            )
+
+            # genai.Client() constructor should only have been called ONCE across both turns
+            self.assertEqual(mock_genai_ctor.call_count, 1)
+            # generate_content should have been called twice on the same shared client
+            self.assertEqual(fake_client.models.generate_content.call_count, 2)
+            self.assertEqual(res1["suggestion"], "Test procedure.")
+            self.assertEqual(res2["suggestion"], "Test procedure.")
+
+    def test_injected_client_is_used(self):
+        """Verifies that injecting a client uses it directly without instantiating genai.Client."""
+        with patch("src.llm_suggestions.genai.Client") as mock_genai_ctor:
+            injected_client = self._create_mock_client(json.dumps({
+                "suggestion": "Injected client suggestion.",
+                "confidence": 0.98,
+                "is_grounded": True
+            }))
+
+            res = generate_support_suggestion(
+                conversation_text="Query with injected client",
+                retrieved_context=self.sample_context,
+                api_key="dummy-key",
+                client=injected_client
+            )
+
+            # genai.Client should not be constructed
+            self.assertEqual(mock_genai_ctor.call_count, 0)
+            injected_client.models.generate_content.assert_called_once()
+            self.assertEqual(res["suggestion"], "Injected client suggestion.")
 
 
 if __name__ == "__main__":

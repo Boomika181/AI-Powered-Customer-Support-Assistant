@@ -1,9 +1,9 @@
 """
 scripts/test_llm_suggestions_real.py
 
-Real Gemini 3.8 Flash API integration test for AI-Powered Support Suggestion Generation.
+Real Gemini API integration test for AI-Powered Support Suggestion Generation.
 Runs actual API requests against Google Gemini with real retrieved context and validates:
-- Model used: gemini-3.8-flash
+- Model used: configured GEMINI_MODEL / LLM_MODEL (defaults to gemini-3.5-flash-lite)
 - Grounded suggestion content
 - Source metadata preservation
 - Safety instructions
@@ -56,7 +56,7 @@ def run_real_suggestion_test():
     print("GEMINI 3.8 FLASH SUPPORT SUGGESTION - LIVE API INTEGRATION TEST")
     print("=" * 70)
 
-    model = os.getenv("LLM_MODEL", "gemini-3.8-flash")
+    model = os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
     api_key = os.getenv("GEMINI_API_KEY", "")
 
     print(f"Configured Model : {model}")

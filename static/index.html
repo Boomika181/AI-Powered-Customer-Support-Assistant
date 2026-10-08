@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Support Assistant | Industrial Machinery Support</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 1. Top Application Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-emblem" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-name">AI Support Assistant</h1>
+          <span class="brand-tagline">Industrial Machinery Support</span>
+        </div>
+      </div>
+
+      <!-- Header Telemetry & Session Controls -->
+      <div class="header-controls">
+        <div class="telemetry-pill status-pill" id="system-status-container" title="WebSocket connection status">
+          <span class="status-beacon disconnected" id="status-dot"></span>
+          <span class="status-name" id="status-label">Disconnected</span>
+        </div>
+
+        <div class="telemetry-pill timer-pill" title="Active session duration">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="timer-label">Session</span>
+          <span class="timer-value" id="session-timer">00:00:00</span>
+        </div>
+
+        <div class="telemetry-pill count-pill" title="Dialogue turns count">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="turn-count-text" id="turn-count">0 turns</span>
+        </div>
+
+        <div class="telemetry-pill device-pill" id="device-pill" title="Audio Capture Input Device">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" x2="12" y1="19" y2="22"></line>
+          </svg>
+          <span id="device-label" class="device-label-text">MacBook Air Microphone</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+
+        <div class="header-actions">
+          <button id="start-btn" class="btn btn-start" title="Start live listening session">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Start Session</span>
+          </button>
+          <button id="stop-btn" class="btn btn-stop" title="Stop live listening session" disabled>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+              <rect width="14" height="14" x="5" y="5" rx="2"></rect>
+            </svg>
+            <span>Stop Session</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Compact Subsystem Status Strip -->
+    <section class="subsystems-bar" aria-label="Pipeline Subsystems Status">
+      <div class="subsystem-pill" id="subsystem-mic">
+        <div class="subsystem-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          </svg>
+        </div>
+        <div class="subsystem-content">
+          <span class="subsystem-title">Microphone</span>
+          <div class="subsystem-state">
+            <span class="subsystem-dot standby" id="dot-mic"></span>
+            <span class="subsystem-val" id="val-mic">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsystem-pill" id="subsystem-stt">
+        <div class="subsystem-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"></path>
+          </svg>
+        </div>
+        <div class="subsystem-content">
+          <span class="subsystem-title">AssemblyAI</span>
+          <div class="subsystem-state">
+            <span class="subsystem-dot standby" id="dot-stt"></span>
+            <span class="subsystem-val" id="val-stt">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsystem-pill" id="subsystem-role">
+        <div class="subsystem-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="subsystem-content">
+          <span class="subsystem-title">Speaker Classification</span>
+          <div class="subsystem-state">
+            <span class="subsystem-dot standby" id="dot-role"></span>
+            <span class="subsystem-val" id="val-role">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsystem-pill" id="subsystem-gemini">
+        <div class="subsystem-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"></path>
+          </svg>
+        </div>
+        <div class="subsystem-content">
+          <span class="subsystem-title">Gemini 3.5 Flash-Lite</span>
+          <div class="subsystem-state">
+            <span class="subsystem-dot standby" id="dot-gemini"></span>
+            <span class="subsystem-val" id="val-gemini">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsystem-pill" id="subsystem-rag">
+        <div class="subsystem-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          </svg>
+        </div>
+        <div class="subsystem-content">
+          <span class="subsystem-title">Knowledge Base (ChromaDB)</span>
+          <div class="subsystem-state">
+            <span class="subsystem-dot standby" id="dot-rag"></span>
+            <span class="subsystem-val" id="val-rag">Indexed</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner hidden" role="alert">
+      <div class="error-badge-icon">⚠️</div>
+      <div class="error-body">
+        <span class="error-title">System Alert</span>
+        <span class="error-message" id="error-message">An unexpected error occurred.</span>
+      </div>
+      <button class="error-close" id="error-close" aria-label="Dismiss">×</button>
+    </div>
+
+    <!-- 3. Main Dashboard Two-Column Grid -->
+    <main class="dashboard-grid">
+      <!-- ====================================================================
+           LEFT COLUMN: Live Conversation
+           ==================================================================== -->
+      <section class="console-panel conversation-panel" aria-labelledby="timeline-heading">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-icon-wrap accent-blue">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 id="timeline-heading" class="panel-title">Live Conversation</h2>
+              <span class="panel-subtitle">Real-time customer support dialogue</span>
+            </div>
+          </div>
+
+          <div class="panel-header-right">
+            <button id="autoscroll-btn" class="toggle-control active" title="Toggle Auto-Scroll">
+              <span class="toggle-switch"></span>
+              <span>Auto-scroll</span>
+            </button>
+            <div class="stream-beacon" id="stream-indicator">
+              <span class="beacon-dot"></span>
+              <span class="beacon-text">IDLE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="conversation-scroll" id="transcript-scroll">
+          <!-- Empty State -->
+          <div id="transcript-empty" class="conversation-empty-state">
+            <div class="empty-mic-box">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" x2="12" y1="19" y2="22"></line>
+              </svg>
+            </div>
+            <h3 class="empty-title">No active conversation</h3>
+            <p class="empty-desc">Start a session to begin live customer support assistance.</p>
+          </div>
+
+          <!-- Finalized Conversation Turns Container -->
+          <div class="conversation-feed" id="conversation-feed"></div>
+
+          <!-- Real-Time Partial Utterance Container -->
+          <div class="partial-turn-card hidden" id="partial-container">
+            <div class="partial-avatar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              </svg>
+            </div>
+            <div class="partial-content">
+              <div class="partial-header">
+                <div class="listening-tag">
+                  <span class="listening-label" id="partial-speaker">LISTENING...</span>
+                  <span class="pulse-dot"></span>
+                  <span class="pulse-dot"></span>
+                  <span class="pulse-dot"></span>
+                </div>
+                <span class="partial-time" id="partial-time"></span>
+              </div>
+              <div class="partial-text" id="partial-text"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           RIGHT COLUMN: Intelligence, Grounded Actions & Assistance
+           ==================================================================== -->
+      <div class="intelligence-column">
+        <!-- ROW 1: Customer Analysis (Customer Sentiment & Query Category side-by-side) -->
+        <div class="analysis-dual-grid">
+          <!-- Sentiment Card -->
+          <article class="console-panel analysis-card" aria-labelledby="sentiment-heading">
+            <div class="panel-header compact">
+              <div class="panel-header-left">
+                <div class="panel-icon-wrap accent-crimson">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                  </svg>
+                </div>
+                <h3 id="sentiment-heading" class="panel-title-sm">Customer Sentiment</h3>
+              </div>
+              <span class="confidence-tag" id="sentiment-confidence"></span>
+            </div>
+            <div class="analysis-card-body">
+              <div class="badge-row">
+                <span class="mini-dot sentiment-dot" id="sentiment-dot"></span>
+                <span class="sentiment-badge empty" id="sentiment-badge">No sentiment detected</span>
+              </div>
+              <div class="rationale-row hidden" id="sentiment-rationale"></div>
+            </div>
+          </article>
+
+          <!-- Query Category Card -->
+          <article class="console-panel analysis-card" aria-labelledby="category-heading">
+            <div class="panel-header compact">
+              <div class="panel-header-left">
+                <div class="panel-icon-wrap accent-purple">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                  </svg>
+                </div>
+                <h3 id="category-heading" class="panel-title-sm">Query Category</h3>
+              </div>
+              <span class="confidence-tag" id="category-confidence"></span>
+            </div>
+            <div class="analysis-card-body">
+              <div class="badge-row">
+                <span class="mini-dot category-dot" id="category-dot"></span>
+                <span class="category-badge empty" id="category-badge">No category detected</span>
+              </div>
+              <div class="rationale-row hidden" id="category-rationale"></div>
+            </div>
+          </article>
+        </div>
+
+        <!-- ROW 2: AI Support Suggestions (HERO CARD - PRIMARY FEATURE) -->
+        <article class="console-panel hero-suggestions-card" aria-labelledby="suggestions-heading">
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-icon-wrap accent-gold">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18h6"></path>
+                  <path d="M10 22h4"></path>
+                  <path d="M15 2a6 6 0 0 0-6 6c0 2.2 1 3.5 2 4.5.7.7 1 1.5 1 2.5h4c0-1 .3-1.8 1-2.5 1-1 2-2.3 2-4.5a6 6 0 0 0-6-6Z"></path>
+                </svg>
+              </div>
+              <h2 id="suggestions-heading" class="panel-title">AI Support Suggestions</h2>
+            </div>
+
+            <div class="panel-header-right">
+              <span class="grounding-pill empty" id="grounding-badge">Awaiting Context</span>
+              <div class="latency-pill hidden" id="suggestion-latency">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 14 14"></polyline>
+                </svg>
+                <span id="suggestion-latency-val">0.00s</span>
+              </div>
+              <span class="conf-pill hidden" id="suggestion-confidence"></span>
+            </div>
+          </div>
+
+          <div class="suggestions-card-body">
+            <!-- Empty state -->
+            <div id="suggestions-empty" class="suggestions-empty-state">
+              <div class="bulb-icon">💡</div>
+              <h4>No recommendations generated yet</h4>
+              <p>Actionable procedural solutions appear automatically when customer issues are confirmed.</p>
+            </div>
+
+            <!-- Ungrounded alert -->
+            <div id="ungrounded-alert" class="ungrounded-alert hidden" role="alert">
+              <div class="alert-icon">⚠️</div>
+              <div class="alert-text">
+                <strong>Insufficient Technical Documentation</strong>
+                <p>The available documentation does not contain verified resolution steps for this specific issue. Escalate to senior technical engineering.</p>
+              </div>
+            </div>
+
+            <!-- Grounded Suggestions Content -->
+            <div id="suggestion-content" class="suggestion-content-wrap hidden">
+              <!-- Likely Issue Header/Summary -->
+              <div class="likely-issue-section" id="section-diagnosis">
+                <span class="likely-issue-label">LIKELY ISSUE</span>
+                <p class="likely-issue-text" id="suggestion-summary-text"></p>
+              </div>
+
+              <!-- Recommended Actions Header -->
+              <div class="actions-section-header" id="section-actions-header">
+                <span class="recommended-actions-label">RECOMMENDED ACTIONS</span>
+              </div>
+
+              <!-- 2-3 Action Suggestion Cards Grid -->
+              <div class="suggestion-cards-grid" id="suggestion-steps-list"></div>
+
+              <!-- Compact Safety Warning Banner -->
+              <div class="safety-banner hidden" id="suggestion-safety-box">
+                <div class="safety-icon">⚠️</div>
+                <div class="safety-body">
+                  <strong class="safety-label">SAFETY:</strong>
+                  <span class="safety-text" id="suggestion-safety-text"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ROW 3: Knowledge Base Sources -->
+        <article class="console-panel sources-panel" aria-labelledby="sources-heading">
+          <div class="panel-header compact">
+            <div class="panel-header-left">
+              <div class="panel-icon-wrap accent-cyan">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <h3 id="sources-heading" class="panel-title-sm">Knowledge Base Sources</h3>
+            </div>
+            <span class="sources-badge" id="sources-count">0 citations</span>
+          </div>
+
+          <div class="sources-body">
+            <div id="sources-empty" class="sources-empty-state">
+              Retrieved technical documentation chunks will appear here upon customer queries.
+            </div>
+            <div class="sources-container hidden" id="sources-container">
+              <div class="sources-list" id="sources-list"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Optional: Suggested Questions (Rendered only when available in response) -->
+        <article class="console-panel questions-panel hidden" id="questions-panel" aria-labelledby="questions-heading">
+          <div class="panel-header compact">
+            <div class="panel-header-left">
+              <div class="panel-icon-wrap accent-indigo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <h3 id="questions-heading" class="panel-title-sm">Suggested Questions <span class="sub-label">(Agent Assistance)</span></h3>
+            </div>
+            <span class="panel-badge-text" id="questions-count">Agent Assistance</span>
+          </div>
+
+          <div class="questions-body">
+            <div id="questions-empty" class="questions-empty-state">
+              Suggested questions will appear when additional customer information is needed.
+            </div>
+            <ul class="questions-list hidden" id="questions-list"></ul>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

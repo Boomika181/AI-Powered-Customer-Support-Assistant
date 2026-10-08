@@ -34,3 +34,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Archives & bundles
+*.zip
+*.tar.gz
+

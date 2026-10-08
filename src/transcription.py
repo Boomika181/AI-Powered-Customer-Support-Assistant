@@ -33,6 +33,40 @@ from src.audio_capture import AudioCapture, AudioCaptureError
 logger = logging.getLogger("transcription")
 
 
+# Role mapping configuration for diarization
+SPEAKER_A_ROLE = os.getenv("SPEAKER_A_ROLE", "Customer")
+SPEAKER_B_ROLE = os.getenv("SPEAKER_B_ROLE", "Agent")
+
+
+def map_speaker_to_role(speaker_label: Optional[str]) -> str:
+    """
+    Maps an AssemblyAI raw speaker label (e.g. 'A', 'B', 'Speaker A', '0')
+    to a configured role (SPEAKER_A_ROLE='Customer', SPEAKER_B_ROLE='Agent').
+    Preserves existing role names if already 'Customer' or 'Agent'.
+    Defaults to SPEAKER_A_ROLE ('Customer') if label is None or unmapped.
+    """
+    role_a = os.getenv("SPEAKER_A_ROLE", "Customer")
+    role_b = os.getenv("SPEAKER_B_ROLE", "Agent")
+
+    if not speaker_label:
+        return role_a
+
+    label_clean = str(speaker_label).strip()
+
+    if label_clean.lower() == role_a.lower():
+        return label_clean
+    if label_clean.lower() == role_b.lower():
+        return label_clean
+
+    upper = label_clean.upper()
+    if upper in {"A", "SPEAKER A", "SPEAKER_A", "0", "SPEAKER 0", "SPEAKER_0"} or upper.endswith(" A") or upper.endswith("_A"):
+        return role_a
+    elif upper in {"B", "SPEAKER B", "SPEAKER_B", "1", "SPEAKER 1", "SPEAKER_1"} or upper.endswith(" B") or upper.endswith("_B"):
+        return role_b
+
+    return role_a
+
+
 class TranscriptionError(Exception):
     """Raised when transcription session fails or configuration is invalid."""
     pass
@@ -61,23 +95,37 @@ class ConversationState:
     def set_partial(self, text: str, speaker: Optional[str] = None) -> None:
         """Updates the current in-progress partial transcript."""
         self.current_partial = text.strip()
-        self.current_speaker = speaker
+        self.current_speaker = speaker if speaker else map_speaker_to_role(None)
 
     def add_final_segment(
         self,
         text: str,
         speaker: Optional[str] = None,
-        confidence: Optional[float] = None
+        confidence: Optional[float] = None,
+        raw_speaker: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Appends a finalized transcript segment upon turn completion / speech break.
         Clears the in-progress partial transcript.
+        Preserves raw AssemblyAI speaker label and maps to configured role.
         """
         cleaned_text = text.strip()
         timestamp = datetime.now(timezone.utc).isoformat()
+
+        role_a = os.getenv("SPEAKER_A_ROLE", "Customer")
+        role_b = os.getenv("SPEAKER_B_ROLE", "Agent")
+
+        actual_raw = raw_speaker or speaker or "A"
+        if speaker is not None:
+            final_role = speaker
+        else:
+            final_role = map_speaker_to_role(actual_raw)
+
         segment = {
             "timestamp": timestamp,
-            "speaker": speaker or "Speaker",
+            "speaker": final_role,
+            "raw_speaker": actual_raw,
+            "speaker_label": actual_raw,
             "text": cleaned_text,
             "confidence": confidence,
             "is_final": True
@@ -96,6 +144,50 @@ class ConversationState:
         if include_speaker:
             return "\n".join(f"[{s['speaker']}] {s['text']}" for s in self.segments)
         return " ".join(s["text"] for s in self.segments)
+
+    def get_customer_transcript(self, customer_role: Optional[str] = None) -> str:
+        """
+        Returns conversation string concatenated from segments spoken by Customer only.
+        """
+        target_role = (customer_role or os.getenv("SPEAKER_A_ROLE", "Customer")).lower()
+        cust_segments = [
+            s for s in self.segments
+            if s.get("speaker", "").lower() == target_role or s.get("role", "").lower() == target_role
+        ]
+        if not cust_segments:
+            return ""
+        return " ".join(s["text"] for s in cust_segments)
+
+    def get_recent_customer_transcript(
+        self,
+        max_turns: int = 4,
+        customer_role: Optional[str] = None
+    ) -> str:
+        """
+        Returns bounded conversation string concatenated from the most recent N
+        finalized turns spoken by Customer only.
+
+        - Considers only confirmed CUSTOMER turns.
+        - Excludes AGENT turns.
+        - Excludes UNKNOWN turns.
+        - Preserves chronological order.
+        - Returns only the most recent N customer turns (defaults to 4).
+        - If fewer than N customer turns exist, returns all available customer turns.
+        - Does NOT modify or mutate self.segments.
+        """
+        if max_turns <= 0:
+            return ""
+
+        target_role = (customer_role or os.getenv("SPEAKER_A_ROLE", "Customer")).lower()
+        cust_segments = [
+            s for s in self.segments
+            if s.get("speaker", "").lower() == target_role or s.get("role", "").lower() == target_role
+        ]
+        if not cust_segments:
+            return ""
+
+        recent_cust_segments = cust_segments[-max_turns:]
+        return " ".join(s["text"] for s in recent_cust_segments)
 
     def get_recent_context(self, max_segments: int = 5) -> List[Dict[str, Any]]:
         """
@@ -164,26 +256,32 @@ class RealtimeTranscriber:
         if not event.transcript or not event.transcript.strip():
             return
 
-        speaker = getattr(event, "speaker_label", None) or "speaker"
+        raw_event_speaker = getattr(event, "speaker_label", None)
+        raw_speaker = raw_event_speaker or "A"
+        mapped_speaker = map_speaker_to_role(raw_speaker)
         transcript_text = event.transcript.strip()
 
         if event.end_of_turn:
             # Final transcript segment -> Speech Break Trigger!
             segment = self.conversation_state.add_final_segment(
                 text=transcript_text,
-                speaker=speaker,
-                confidence=getattr(event, "end_of_turn_confidence", None)
+                speaker=mapped_speaker,
+                confidence=getattr(event, "end_of_turn_confidence", None),
+                raw_speaker=raw_speaker
             )
-            logger.info("Final transcript received: [%s] %s", speaker, transcript_text)
+            logger.info(
+                "Final transcript received: [%s (raw: %s, aai_event_label: %r)] %s",
+                mapped_speaker, raw_speaker, raw_event_speaker, transcript_text
+            )
 
             # Fire downstream hook with newly finalized turn & full state
             if self.on_speech_break:
                 self.on_speech_break(segment, self.conversation_state)
         else:
             # In-progress partial transcript
-            self.conversation_state.set_partial(transcript_text, speaker)
+            self.conversation_state.set_partial(transcript_text, mapped_speaker)
             if self.on_partial:
-                self.on_partial(transcript_text, speaker)
+                self.on_partial(transcript_text, mapped_speaker)
 
     def _on_error(self, client: Any, event: Any) -> None:
         """Invoked on streaming error."""
@@ -201,6 +299,7 @@ class RealtimeTranscriber:
     def start_streaming(self, audio_capture: AudioCapture) -> None:
         """
         Connects to AssemblyAI and streams audio generator from AudioCapture.
+        Enables streaming speaker diarization with max 2 speakers (Customer & Agent).
         """
         if not self.api_key or self.api_key.strip().startswith("your_"):
             raise TranscriptionError(
@@ -217,11 +316,13 @@ class RealtimeTranscriber:
         self._client.on(aai_v3.RealTimeEvents.Error, self._on_error)
         self._client.on(aai_v3.RealTimeEvents.Termination, self._on_termination)
 
-        # Connect session parameters
+        # Connect session parameters with speaker diarization enabled
         params = aai_v3.RealTimeParameters(
             sample_rate=self.sample_rate,
             encoding=aai_v3.Encoding.pcm_s16le,
-            format_turns=True
+            format_turns=True,
+            speaker_labels=True,
+            max_speakers=2
         )
 
         logger.info("Connecting to AssemblyAI WebSocket...")

@@ -242,7 +242,7 @@ class TestSentimentAnalysis(unittest.TestCase):
     # 14. Valid Successful Response Structure
     # --------------------------------------------------------------------------
     @patch("src.sentiment_analysis.genai.Client")
-    @patch.dict(os.environ, {"LLM_MODEL": "gemini-3.8-flash"})
+    @patch.dict(os.environ, {"GEMINI_MODEL": "gemini-3.5-flash-lite"})
     def test_valid_successful_response_and_model(self, mock_client_cls):
         mock_client = self._create_mock_client(json.dumps({
             "sentiment": "Neutral",
@@ -260,7 +260,7 @@ class TestSentimentAnalysis(unittest.TestCase):
         self.assertEqual(res["confidence"], 0.85)
 
         called_args = mock_client.models.generate_content.call_args
-        self.assertEqual(called_args.kwargs["model"], "gemini-3.8-flash")
+        self.assertEqual(called_args.kwargs["model"], "gemini-3.5-flash-lite")
         # Verify no response_schema or response_mime_type in call
         self.assertNotIn("config", called_args.kwargs)
 
