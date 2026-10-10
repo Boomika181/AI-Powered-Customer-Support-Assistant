@@ -4,10 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Support Assistant | Industrial Machinery Support</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=2.1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="app-layout">
@@ -61,6 +73,22 @@
           </svg>
         </div>
 
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="telemetry-pill theme-toggle-btn" type="button" aria-label="Switch to light theme" title="Switch to light theme">
+          <span class="theme-icon" aria-hidden="true">◐</span>
+          <span class="theme-label">Theme</span>
+        </button>
+
+        <!-- Authenticated Agent Identity Pill -->
+        <div class="telemetry-pill agent-pill" id="agent-pill" title="Authenticated Support Agent">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="agent-label-prefix">Agent:</span>
+          <span class="agent-name-text" id="agent-name">Loading...</span>
+        </div>
+
         <div class="header-actions">
           <button id="start-btn" class="btn btn-start" title="Start live listening session">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -73,6 +101,14 @@
               <rect width="14" height="14" x="5" y="5" rx="2"></rect>
             </svg>
             <span>Stop Session</span>
+          </button>
+          <button id="logout-btn" class="btn btn-logout" type="button" title="Sign out of current agent session">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Logout</span>
           </button>
         </div>
       </div>

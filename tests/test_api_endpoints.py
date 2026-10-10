@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from src.main import app, set_coordinator
+from src.auth import SESSION_COOKIE_NAME, create_session, clear_all_sessions
 
 
 class TestApiEndpoints(unittest.TestCase):
@@ -34,8 +35,12 @@ class TestApiEndpoints(unittest.TestCase):
         # Inject mock coordinator into FastAPI application
         set_coordinator(self.mock_coordinator)
         self.client = TestClient(app)
+        # Authenticate client with a valid demo session
+        self.session = create_session("boomika")
+        self.client.cookies.set(SESSION_COOKIE_NAME, self.session.session_id)
 
     def tearDown(self):
+        clear_all_sessions()
         set_coordinator(None)
 
     # --------------------------------------------------------------------------
@@ -61,12 +66,18 @@ class TestApiEndpoints(unittest.TestCase):
         self.assertIn("indexed_chunks", data)
         self.assertIn("pipeline_streaming", data)
 
-    def test_get_dashboard_pending(self):
-        """Verifies GET /dashboard returns pending status when index.html does not yet exist."""
+    def test_get_dashboard_authenticated(self):
+        """Verifies GET /dashboard returns dashboard HTML when authenticated."""
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["status"], "pending")
+        self.assertIn("text/html", response.headers.get("content-type", ""))
+
+    def test_get_dashboard_unauthenticated_redirects_to_login(self):
+        """Verifies unauthenticated GET /dashboard redirects to /login."""
+        unauth_client = TestClient(app)
+        response = unauth_client.get("/dashboard", follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login")
 
     # --------------------------------------------------------------------------
     # 2. WebSocket Connection & Event Forwarding Tests
@@ -262,6 +273,13 @@ class TestApiEndpoints(unittest.TestCase):
                 self.assertEqual(resp2["type"], "system_status")
                 self.assertEqual(resp2["status"], "already_running")
                 self.mock_coordinator.start.assert_not_called()
+
+    def test_unauthenticated_websocket_rejected(self):
+        """Verifies unauthenticated WebSocket request without cookie is rejected."""
+        unauth_client = TestClient(app)
+        with self.assertRaises(Exception):
+            with unauth_client.websocket_connect("/ws/live") as ws:
+                pass
 
 
 if __name__ == "__main__":

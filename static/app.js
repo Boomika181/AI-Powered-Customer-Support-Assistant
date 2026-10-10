@@ -13,8 +13,11 @@
   const sessionTimer = document.getElementById('session-timer');
   const turnCountText = document.getElementById('turn-count');
   const deviceLabel = document.getElementById('device-label');
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  const agentNameEl = document.getElementById('agent-name');
   const startBtn = document.getElementById('start-btn');
   const stopBtn = document.getElementById('stop-btn');
+  const logoutBtn = document.getElementById('logout-btn');
   const autoscrollBtn = document.getElementById('autoscroll-btn');
   const streamIndicator = document.getElementById('stream-indicator');
 
@@ -487,6 +490,11 @@
       console.warn('[Dashboard] WebSocket closed:', event.code, event.reason);
       updateSystemStatus('disconnected', false);
       stopSessionTimer();
+      if (event.code === 1008) {
+        console.warn('[Dashboard] Unauthorized WebSocket connection. Redirecting to login.');
+        window.location.href = '/login';
+        return;
+      }
       if (!isIntentionallyClosed) {
         scheduleReconnect();
       }
@@ -1136,6 +1144,117 @@
     });
   }
 
+  // --- Safe Logout Handler ---
+  async function handleLogout() {
+    console.log('[Dashboard] Initiating safe logout...');
+    isIntentionallyClosed = true;
+
+    // 1. Stop active audio capture / listening session safely
+    if (isRunning) {
+      try {
+        sendCommand('stop');
+      } catch (err) {
+        console.warn('[Dashboard] Error sending stop command during logout:', err);
+      }
+      stopSessionTimer();
+      isRunning = false;
+    }
+
+    // 2. Safely close WebSocket
+    if (ws) {
+      try {
+        ws.close(1000, 'Agent logged out');
+      } catch (err) {
+        console.warn('[Dashboard] Error closing WebSocket on logout:', err);
+      }
+      ws = null;
+    }
+
+    // 3. Invalidate server-side session and cookie
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+    } catch (err) {
+      console.warn('[Dashboard] Logout request error:', err);
+    }
+
+    // 4. Redirect to login page
+    window.location.href = '/login';
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+  }
+
+  // --- Authenticated Identity Initialization ---
+  async function initAgentIdentity() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) {
+        window.location.href = '/login';
+        return false;
+      }
+      const data = await res.json();
+      if (data.authenticated && data.agent_name) {
+        if (agentNameEl) {
+          agentNameEl.textContent = data.agent_name;
+        }
+        return true;
+      } else {
+        window.location.href = '/login';
+        return false;
+      }
+    } catch (err) {
+      console.warn('[Dashboard] Auth check failed:', err);
+      window.location.href = '/login';
+      return false;
+    }
+  }
+
+  // --- Theme Management (Light / Dark Switching) ---
+  function getEffectiveTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+  }
+
+  function updateThemeButtonA11y(theme) {
+    if (!themeToggleBtn) return;
+    if (theme === 'light') {
+      themeToggleBtn.setAttribute('aria-label', 'Switch to dark theme');
+      themeToggleBtn.setAttribute('title', 'Switch to dark theme');
+    } else {
+      themeToggleBtn.setAttribute('aria-label', 'Switch to light theme');
+      themeToggleBtn.setAttribute('title', 'Switch to light theme');
+    }
+  }
+
+  function applyTheme(targetTheme) {
+    const theme = targetTheme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      console.warn('[Dashboard] Could not persist theme preference to localStorage:', e);
+    }
+    updateThemeButtonA11y(theme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = getEffectiveTheme();
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(newTheme);
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    // Sync accessibility label/tooltip with current theme state
+    updateThemeButtonA11y(getEffectiveTheme());
+  }
+
   // --- Helper: HTML Sanitization ---
   function escapeHtml(str) {
     if (typeof str !== 'string') return '';
@@ -1148,7 +1267,10 @@
   }
 
   // --- Initial Launch ---
-  document.addEventListener('DOMContentLoaded', function () {
-    connectWebSocket();
+  document.addEventListener('DOMContentLoaded', async function () {
+    const isAuthed = await initAgentIdentity();
+    if (isAuthed) {
+      connectWebSocket();
+    }
   });
 })();

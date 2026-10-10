@@ -522,7 +522,7 @@ To conduct a live or simulated 3–5 minute demonstration using the standard ind
    - *Result:* Role classified as **CUSTOMER**; category switches to **Maintenance & Parts**; suggestions recommend replacement interval (3 months or upon E-102 alarm); cites `UM-WP400-1.1.3`.
 6. **Stop Session:** Click **"Stop Session"**. Audio capture shuts down safely.
 
-*(For full narration instructions, see [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)).*
+*(For full presentation narration, see [docs/DEMO_SCRIPT.md](file:///Users/boomika/AI-Powered%20Customer%20Support%20Assistant/docs/DEMO_SCRIPT.md). For the complete external manual evaluator testing script covering authentication, edge cases, and results checklist, see [docs/EVALUATOR_TEST_SCRIPT.md](file:///Users/boomika/AI-Powered%20Customer%20Support%20Assistant/docs/EVALUATOR_TEST_SCRIPT.md)).*
 
 ---
 

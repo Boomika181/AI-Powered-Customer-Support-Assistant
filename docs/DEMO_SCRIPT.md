@@ -3,6 +3,9 @@
 
 This demonstration script provides a step-by-step walkthrough of the AI-Powered Customer Support Assistant during a 3–5 minute presentation or evaluation. It uses the standard industrial troubleshooting scenario verified during testing (**WP-400 CNC Panel Saw — Error E-102 & Dust Extraction Interlock**).
 
+> [!NOTE]
+> For a comprehensive, step-by-step manual testing script designed for external evaluators testing a deployed or hosted application (including authentication flows, negative edge cases, and an evaluator results checklist), see [docs/EVALUATOR_TEST_SCRIPT.md](file:///Users/boomika/AI-Powered%20Customer%20Support%20Assistant/docs/EVALUATOR_TEST_SCRIPT.md).
+
 ---
 
 ## Demo Overview & Goal
