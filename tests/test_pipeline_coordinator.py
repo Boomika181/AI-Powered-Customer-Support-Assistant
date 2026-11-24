@@ -957,6 +957,28 @@ class TestPipelineCoordinatorCombinedAnalysis(unittest.TestCase):
         sugg_kwargs = self.mock_suggestion_fn.call_args.kwargs
         self.assertIsNone(sugg_kwargs["category"])
 
+    def test_positive_customer_turn_without_issue_skips_suggestion_update(self):
+        """11. Customer conversation with no active issue (has_issue=False) emits no suggestion_update event."""
+        self.mock_suggestion_fn.return_value = {
+            "has_issue": False,
+            "suggestions": [],
+            "suggestion": "",
+            "confidence": 1.0,
+            "is_grounded": True,
+            "sources": []
+        }
+        state = ConversationState()
+        seg = state.add_final_segment(
+            "Thank you so much! Everything is running smoothly now.",
+            speaker="Customer",
+            raw_speaker="A"
+        )
+
+        self.coordinator._handle_speech_break(seg, state)
+
+        sugg_events = [ev for ev in self.captured_events if ev["type"] == "suggestion_update"]
+        self.assertEqual(len(sugg_events), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

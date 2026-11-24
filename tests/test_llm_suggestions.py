@@ -360,6 +360,236 @@ class TestLLMSuggestions(unittest.TestCase):
             injected_client.models.generate_content.assert_called_once()
             self.assertEqual(res["suggestion"], "Injected client suggestion.")
 
+    # --------------------------------------------------------------------------
+    # 11. Exactly 4 Distinct Suggestions & Issue Detection
+    # --------------------------------------------------------------------------
+    @patch("src.llm_suggestions.genai.Client")
+    def test_exactly_four_suggestions_returned_for_issue(self, mock_client_cls):
+        """Verifies exactly 4 distinct suggestions are returned when Gemini returns 4 items."""
+        mock_client = self._create_mock_client(json.dumps({
+            "has_issue": True,
+            "likely_issue": "WP-400 Dust Extraction Interlock Fault (E-102)",
+            "suggestions": [
+                "Isolate Power: Switch off the main isolator switch and apply LOTO padlock.",
+                "Inspect Cartridge: Check dust extraction cartridge WP4-FL-DE1 for blockages.",
+                "Verify Differential Pressure: Measure pressure drop across the filter to ensure <1200 Pa.",
+                "Check Circuit Breaker: Inspect and reset the dedicated 16A extraction fan circuit breaker."
+            ],
+            "safety": "Never open extraction ducting while the main blade is spinning.",
+            "confidence": 0.98,
+            "is_grounded": True
+        }))
+        mock_client_cls.return_value = mock_client
+
+        res = generate_support_suggestion(
+            conversation_text="The saw stopped with E-102 error.",
+            retrieved_context=self.sample_context,
+            api_key="test-key"
+        )
+
+        self.assertTrue(res["has_issue"])
+        self.assertEqual(len(res["suggestions"]), 4)
+        self.assertEqual(len(set(res["suggestions"])), 4)  # 4 distinct items
+        self.assertIn("WP4-FL-DE1", res["suggestions"][1])
+        self.assertTrue(res["is_grounded"])
+        self.assertIn("1.", res["suggestion"])
+        self.assertIn("4.", res["suggestion"])
+
+    @patch("src.llm_suggestions.genai.Client")
+    def test_fewer_than_four_suggestions_padded_to_four(self, mock_client_cls):
+        """Verifies that if Gemini returns only 2 suggestions, it is padded with safe steps to exactly 4 distinct items."""
+        mock_client = self._create_mock_client(json.dumps({
+            "has_issue": True,
+            "likely_issue": "Filter obstruction",
+            "suggestions": [
+                "Clean or replace filter cartridge WP4-FL-DE1.",
+                "Verify fan breaker in cabinet."
+            ],
+            "safety": "Disconnect power before servicing.",
+            "confidence": 0.92,
+            "is_grounded": True
+        }))
+        mock_client_cls.return_value = mock_client
+
+        res = generate_support_suggestion(
+            conversation_text="Filter blocked on WP-400.",
+            retrieved_context=self.sample_context,
+            api_key="test-key"
+        )
+
+        self.assertTrue(res["has_issue"])
+        self.assertEqual(len(res["suggestions"]), 4)
+        self.assertEqual(len(set(res["suggestions"])), 4)
+        self.assertIn("WP4-FL-DE1", res["suggestions"][0])
+
+    def test_positive_conversation_without_issue_returns_no_suggestions(self):
+        """Verifies that a purely positive conversation with no reported issue generates 0 suggestions and has_issue=False."""
+        res = generate_support_suggestion(
+            conversation_text="Thank you so much! Everything is running smoothly now, we appreciate the help.",
+            retrieved_context=self.sample_context,
+            api_key="test-key"
+        )
+
+        self.assertFalse(res["has_issue"])
+        self.assertEqual(len(res["suggestions"]), 0)
+        self.assertEqual(res["suggestion"], "")
+
+    def test_incomplete_information_with_empty_context_provides_safe_next_steps(self):
+        """Verifies incomplete info / empty context returns 4 safe distinct next steps without calling LLM."""
+        res = generate_support_suggestion(
+            conversation_text="Our machine stopped but no error code was displayed.",
+            retrieved_context=[],
+            api_key="test-key"
+        )
+
+        self.assertTrue(res["has_issue"])
+        self.assertEqual(len(res["suggestions"]), 4)
+        self.assertEqual(len(set(res["suggestions"])), 4)
+        self.assertFalse(res["is_grounded"])
+        self.assertEqual(res["confidence"], 0.0)
+        self.assertEqual(res["suggestion_sources"], [[], [], [], []])
+
+    @patch("src.llm_suggestions.genai.Client")
+    def test_single_and_multiple_citations_per_suggestion(self, mock_client_cls):
+        """Tests 1 citation, 2 citations, 3 citations, shared docs, and standard protocols."""
+        multi_context = [
+            {
+                "text": "Code: E-102 | Dust extraction fault | Action: Clean or replace cartridge WP4-FL-DE1. Check fan breaker.",
+                "metadata": {
+                    "source_file": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+                    "page": 6,
+                    "document_reference": "TS-WP400-3.1",
+                    "section": "Section 3.1 WP-400 error codes"
+                }
+            },
+            {
+                "text": "Minimum air velocity at the saw hood is 20 m/s. Replace filter cartridge WP4-FL-DE1.",
+                "metadata": {
+                    "source_file": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+                    "page": 2,
+                    "document_reference": "UM-WP400-1.1.3",
+                    "section": "Section 1.1.3 Dust extraction"
+                }
+            },
+            {
+                "text": "WP4-FL-DE1 Dust extraction filter cartridge Fits WP-400 Replace when Alarm E-102 or every 3 months.",
+                "metadata": {
+                    "source_file": "Sample_Technical_Documentation_Pack_SYNTHETIC.pdf",
+                    "page": 4,
+                    "document_reference": "MP-ALL-2.3",
+                    "section": "Section 2.3 Parts catalog"
+                }
+            }
+        ]
+
+        mock_client = self._create_mock_client(json.dumps({
+            "has_issue": True,
+            "likely_issue": "Extraction fan thermal overload and filter blockage",
+            "suggestions": [
+                "Inspect cartridge WP4-FL-DE1 and check the fan breaker.",
+                "Verify minimum air velocity is at least 20 m/s and replace cartridge WP4-FL-DE1 every 3 months per catalog.",
+                "Cross-reference TS-WP400-3.1, UM-WP400-1.1.3, and MP-ALL-2.3 for complete dust extraction specifications.",
+                "Escalate to technical engineering if the fault persists."
+            ],
+            "suggestion_sources": [
+                ["TS-WP400-3.1"],
+                ["UM-WP400-1.1.3", "MP-ALL-2.3"],
+                ["TS-WP400-3.1", "UM-WP400-1.1.3", "MP-ALL-2.3"],
+                []
+            ],
+            "safety": "Isolate machine power before servicing.",
+            "confidence": 0.95,
+            "is_grounded": True
+        }))
+        mock_client_cls.return_value = mock_client
+
+        res = generate_support_suggestion(
+            conversation_text="WP-400 extraction fault alarm E-102.",
+            retrieved_context=multi_context,
+            api_key="test-key"
+        )
+
+        sugg_sources = res["suggestion_sources"]
+        self.assertEqual(len(sugg_sources), 4)
+
+        # 1. One suggestion with one citation
+        self.assertEqual(len(sugg_sources[0]), 1)
+        self.assertEqual(sugg_sources[0][0]["document_reference"], "TS-WP400-3.1")
+        self.assertEqual(sugg_sources[0][0]["page"], 6)
+
+        # 2. One suggestion with two citations
+        self.assertEqual(len(sugg_sources[1]), 2)
+        refs_1 = [c["document_reference"] for c in sugg_sources[1]]
+        self.assertIn("UM-WP400-1.1.3", refs_1)
+        self.assertIn("MP-ALL-2.3", refs_1)
+
+        # 3. One suggestion with three citations
+        self.assertEqual(len(sugg_sources[2]), 3)
+        refs_2 = [c["document_reference"] for c in sugg_sources[2]]
+        self.assertIn("TS-WP400-3.1", refs_2)
+        self.assertIn("UM-WP400-1.1.3", refs_2)
+        self.assertIn("MP-ALL-2.3", refs_2)
+
+        # 4. Standard support protocol with no document citation
+        self.assertEqual(len(sugg_sources[3]), 0)
+
+        # 5. Multiple suggestions sharing the same document
+        # TS-WP400-3.1 is in suggestion #1 and suggestion #3
+        ts_source = next(s for s in res["sources"] if s["document_reference"] == "TS-WP400-3.1")
+        self.assertIn(1, ts_source["supported_suggestions"])
+        self.assertIn(3, ts_source["supported_suggestions"])
+
+        # 6. No fabricated references
+        valid_refs = {"TS-WP400-3.1", "UM-WP400-1.1.3", "MP-ALL-2.3"}
+        for group in sugg_sources:
+            for c in group:
+                self.assertIn(c["document_reference"], valid_refs)
+
+    @patch("src.llm_suggestions.genai.Client")
+    def test_missing_citation_metadata_does_not_fabricate(self, mock_client_cls):
+        """Verifies that chunks with missing page numbers (-1) do not fabricate pages."""
+        sparse_context = [
+            {
+                "text": "Check sensor alignment.",
+                "metadata": {
+                    "document_reference": "DOC-SPARSE-01",
+                    "page": -1,
+                    "section": "Sensor Maintenance"
+                }
+            }
+        ]
+
+        mock_client = self._create_mock_client(json.dumps({
+            "has_issue": True,
+            "likely_issue": "Sensor issue",
+            "suggestions": [
+                "Check sensor alignment per DOC-SPARSE-01.",
+                "Verify wiring harness.",
+                "Clean optical sensor surface.",
+                "Escalate to technical engineering."
+            ],
+            "suggestion_sources": [
+                ["DOC-SPARSE-01"],
+                [],
+                [],
+                []
+            ],
+            "safety": "",
+            "confidence": 0.9,
+            "is_grounded": True
+        }))
+        mock_client_cls.return_value = mock_client
+
+        res = generate_support_suggestion(
+            conversation_text="Sensor is not detecting material.",
+            retrieved_context=sparse_context,
+            api_key="test-key"
+        )
+
+        citation = res["suggestion_sources"][0][0]
+        self.assertEqual(citation["document_reference"], "DOC-SPARSE-01")
+        self.assertEqual(citation["page"], -1)  # preserved as -1, not fabricated
+
 
 if __name__ == "__main__":
     unittest.main()

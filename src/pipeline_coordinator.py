@@ -468,14 +468,27 @@ class PipelineCoordinator:
                 retrieved_context=retrieved_chunks,
                 category=detected_category
             )
-            self.emit_event({
-                "type": "suggestion_update",
-                "suggestion": sugg_res.get("suggestion"),
-                "confidence": sugg_res.get("confidence"),
-                "is_grounded": sugg_res.get("is_grounded"),
-                "sources": sugg_res.get("sources", []),
-                "category": sugg_res.get("category")
-            })
+            has_issue = sugg_res.get("has_issue", True) if sugg_res else False
+            suggestions_list = sugg_res.get("suggestions", []) if sugg_res else []
+            suggestion_str = sugg_res.get("suggestion", "") if sugg_res else ""
+
+            # Only emit suggestion_update if an issue was identified and suggestions exist
+            if sugg_res and has_issue and (suggestions_list or suggestion_str):
+                self.emit_event({
+                    "type": "suggestion_update",
+                    "suggestions": suggestions_list,
+                    "suggestion": suggestion_str,
+                    "likely_issue": sugg_res.get("likely_issue", ""),
+                    "safety": sugg_res.get("safety", ""),
+                    "confidence": sugg_res.get("confidence"),
+                    "is_grounded": sugg_res.get("is_grounded"),
+                    "sources": sugg_res.get("sources", []),
+                    "suggestion_sources": sugg_res.get("suggestion_sources", []),
+                    "category": sugg_res.get("category"),
+                    "has_issue": True
+                })
+            else:
+                logger.info("No active customer issue identified or empty suggestions; skipping suggestion_update emission.")
         except Exception as exc:
             logger.error("Support suggestion generation stage failed: %s", exc)
             self.emit_event({

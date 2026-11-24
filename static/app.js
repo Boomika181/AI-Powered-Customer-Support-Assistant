@@ -743,6 +743,24 @@
 
   // 5. Support Suggestion & Grounding Update (Primary Focus)
   function handleSuggestionUpdate(data) {
+    if (!data) return;
+
+    // Check if an issue has been identified and suggestions are present
+    const hasIssue = data.has_issue !== false;
+    const hasSuggestions = (Array.isArray(data.suggestions) && data.suggestions.length > 0) ||
+      (typeof data.suggestion === 'string' && data.suggestion.trim().length > 0);
+
+    if (!hasIssue || !hasSuggestions) {
+      // Maintain awaiting-context / empty state when no customer issue has been identified
+      if (suggestionsEmpty) suggestionsEmpty.classList.remove('hidden');
+      if (suggestionContent) suggestionContent.classList.add('hidden');
+      if (groundingBadge) {
+        groundingBadge.className = 'grounding-pill empty';
+        groundingBadge.textContent = 'Awaiting Context';
+      }
+      return;
+    }
+
     // Hide empty placeholder
     if (suggestionsEmpty) {
       suggestionsEmpty.classList.add('hidden');
@@ -786,23 +804,13 @@
       }
     }
 
-    // Structured Parsing of Suggestion Text
-    let rawText = '';
-    if (typeof data.suggestion === 'string') {
-      rawText = data.suggestion;
-    } else if (Array.isArray(data.suggestion)) {
-      rawText = data.suggestion.join('\n');
-    } else if (data.suggestion && typeof data.suggestion === 'object') {
-      rawText = JSON.stringify(data.suggestion, null, 2);
-    }
-
-    if (rawText && suggestionContent) {
+    if (suggestionContent) {
       suggestionContent.classList.remove('hidden');
-      parseAndRenderSuggestion(rawText, data.sources);
+      parseAndRenderSuggestion(data, data.sources);
     }
 
     // Knowledge Base Citations
-    renderSourceCitations(data.sources);
+    renderSourceCitations(data.sources, data.suggestion_sources);
 
     // Update Subsystem statuses back to Ready
     updateSubsystemsState({
@@ -903,23 +911,88 @@
     // Clean trailing punctuation or separators from actions
     actions = actions.map(a => a.replace(/[\s,;]+$/, '').trim()).filter(Boolean);
 
-    // Enforce SOW 2-3 cards: maximum 3 cards
-    if (actions.length > 3) {
-      actions = actions.slice(0, 3);
+    // Limit actions up to 4
+    if (actions.length > 4) {
+      actions = actions.slice(0, 4);
     }
 
     return { likelyIssue, actions, safety, questions };
   }
 
-  // --- Render Support Suggestions: Likely Issue, Action Cards, Safety & Questions ---
-  function parseAndRenderSuggestion(rawText, sources) {
-    const parsed = parseSuggestionContent(rawText);
+  // --- Render Support Suggestions: Exactly 4 Action Cards, Likely Issue, Safety & Questions ---
+  function parseAndRenderSuggestion(dataOrText, sources) {
+    let actions = [];
+    let likelyIssue = '';
+    let safety = '';
+    let questions = [];
+    let suggestionSources = [];
+
+    if (dataOrText && typeof dataOrText === 'object' && !Array.isArray(dataOrText)) {
+      likelyIssue = dataOrText.likely_issue || '';
+      safety = dataOrText.safety || '';
+      if (Array.isArray(dataOrText.suggestion_sources)) {
+        suggestionSources = dataOrText.suggestion_sources;
+      }
+      if (Array.isArray(dataOrText.suggestions) && dataOrText.suggestions.length > 0) {
+        actions = dataOrText.suggestions.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof dataOrText.suggestion === 'string') {
+        const parsed = parseSuggestionContent(dataOrText.suggestion);
+        actions = parsed.actions;
+        if (!likelyIssue) likelyIssue = parsed.likelyIssue;
+        if (!safety) safety = parsed.safety;
+        questions = parsed.questions;
+      }
+    } else {
+      let rawText = '';
+      if (typeof dataOrText === 'string') {
+        rawText = dataOrText;
+      } else if (Array.isArray(dataOrText)) {
+        rawText = dataOrText.join('\n');
+      }
+      const parsed = parseSuggestionContent(rawText);
+      actions = parsed.actions;
+      likelyIssue = parsed.likelyIssue;
+      safety = parsed.safety;
+      questions = parsed.questions;
+    }
+
+    // Deduplicate actions while preserving order
+    const seen = new Set();
+    const uniqueActions = [];
+    actions.forEach(act => {
+      const norm = act.replace(/^[\d+.)\-\*]+\s*/, '').trim().toLowerCase();
+      if (norm && !seen.has(norm)) {
+        seen.add(norm);
+        uniqueActions.push(act);
+      }
+    });
+
+    // Enforce exactly 4 suggestion cards whenever an issue has been analyzed
+    const fallbackProceduralSteps = [
+      "Verify operating parameters: Confirm power supply, line voltages, and pneumatic pressure gauges match machine specifications.",
+      "Inspect documented safety status: Ensure all emergency stop circuits and guard interlocks are in a safe, normal operating state.",
+      "Check documentation & diagnostics: Review error history logs and cross-reference equipment schematics in the technical manual.",
+      "Escalate to technical engineering: Contact an authorized factory service technician if the fault persists after initial checks."
+    ];
+
+    while (uniqueActions.length < 4) {
+      const candidate = fallbackProceduralSteps.find(step => {
+        const normStep = step.toLowerCase().substring(0, 20);
+        return !uniqueActions.some(existing => existing.toLowerCase().includes(normStep));
+      }) || fallbackProceduralSteps[uniqueActions.length % fallbackProceduralSteps.length];
+      uniqueActions.push(candidate);
+    }
+
+    if (uniqueActions.length > 4) {
+      uniqueActions.length = 4;
+    }
+
     const sourceList = Array.isArray(sources) ? sources : [];
 
     // 1. Likely Issue Summary Header
     if (sectionDiagnosis && suggestionSummaryText) {
-      if (parsed.likelyIssue) {
-        suggestionSummaryText.textContent = parsed.likelyIssue;
+      if (likelyIssue) {
+        suggestionSummaryText.textContent = likelyIssue;
         sectionDiagnosis.classList.remove('hidden');
       } else {
         sectionDiagnosis.classList.add('hidden');
@@ -928,7 +1001,7 @@
 
     // 2. Recommended Actions Header & Cards
     if (sectionActionsHeader) {
-      if (parsed.actions.length > 0) {
+      if (uniqueActions.length > 0) {
         sectionActionsHeader.classList.remove('hidden');
       } else {
         sectionActionsHeader.classList.add('hidden');
@@ -938,22 +1011,82 @@
     if (suggestionStepsList) {
       suggestionStepsList.innerHTML = '';
 
-      parsed.actions.forEach((act, idx) => {
+      uniqueActions.forEach((act, idx) => {
         const badgeNum = String(idx + 1).padStart(2, '0');
-
-        let srcLabel = '';
-        if (sourceList[idx]) {
-          const s = sourceList[idx];
-          const ref = s.document_reference || s.source_file || s.doc_id || '';
-          const page = (s.page !== undefined && s.page !== null && s.page !== -1) ? `Page ${s.page}` : '';
-          srcLabel = ref + (page ? ` · ${page}` : '');
-        }
-
         const card = document.createElement('div');
         card.className = 'suggestion-card';
+        card.setAttribute('data-card-idx', String(idx + 1));
 
-        // Check if action has a title prefix before a colon or dash
-        const colonMatch = act.match(/^([^:\-\—]{3,35})[:\-\—]\s*(.+)/);
+        // Determine specific document citations for this suggestion
+        let rawCitations = [];
+        if (Array.isArray(suggestionSources) && suggestionSources[idx]) {
+          const rawItem = suggestionSources[idx];
+          if (Array.isArray(rawItem)) {
+            rawCitations = rawItem;
+          } else if (typeof rawItem === 'string' || typeof rawItem === 'object') {
+            rawCitations = [rawItem];
+          }
+        }
+
+        // Normalize raw citations into array of objects with document_reference, page, title
+        const citations = [];
+        const seenRefs = new Set();
+
+        rawCitations.forEach(c => {
+          let ref = '';
+          let page = -1;
+          let title = '';
+          if (typeof c === 'string') {
+            ref = c.trim();
+          } else if (c && typeof c === 'object') {
+            ref = (c.document_reference || c.doc_id || '').trim();
+            page = (c.page !== undefined && c.page !== null) ? c.page : -1;
+            title = c.title || c.section || '';
+          }
+
+          if (ref && !seenRefs.has(ref)) {
+            seenRefs.add(ref);
+            const matchingSource = sourceList.find(s => s.document_reference === ref || s.doc_id === ref);
+            if (matchingSource) {
+              if (page === -1 && matchingSource.page !== undefined && matchingSource.page !== null) {
+                page = matchingSource.page;
+              }
+              if (!title) {
+                title = matchingSource.title || matchingSource.section || ref;
+              }
+            }
+            citations.push({
+              document_reference: ref,
+              page: page,
+              title: title || ref
+            });
+          }
+        });
+
+        // If no citations provided via suggestionSources, check if action text cites any known source
+        if (citations.length === 0 && sourceList.length > 0) {
+          for (const s of sourceList) {
+            const ref = s.document_reference || s.doc_id;
+            if (ref && act.toLowerCase().includes(ref.toLowerCase()) && !seenRefs.has(ref)) {
+              seenRefs.add(ref);
+              citations.push({
+                document_reference: ref,
+                page: (s.page !== undefined && s.page !== null) ? s.page : -1,
+                title: s.title || s.section || ref
+              });
+            }
+          }
+        }
+
+        // Store comma-separated document references on the card for accurate multi-reference matching
+        if (citations.length > 0) {
+          const docRefsStr = citations.map(c => c.document_reference).join(',');
+          card.setAttribute('data-doc-refs', docRefsStr);
+          card.setAttribute('data-doc-ref', citations[0].document_reference);
+        }
+
+        // Check if action has a title prefix before a colon or spaced dash
+        const colonMatch = act.match(/^([^:\n\r]{3,45})[:]\s*(.+)/) || act.match(/^([^\n\r—–]{3,45})\s+[—–\-]\s+(.+)/);
         let contentHtml = '';
         if (colonMatch) {
           contentHtml = `
@@ -973,28 +1106,51 @@
           `;
         }
 
-        let sourceHtml = '';
-        if (srcLabel) {
-          sourceHtml = `
-            <div class="suggestion-card-source">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-              <span>Source: ${escapeHtml(srcLabel)}</span>
+        let citationHtml = '';
+        if (citations.length > 0) {
+          const badgesHtml = citations.map(c => {
+            const ref = c.document_reference;
+            const pageText = (c.page !== undefined && c.page !== null && c.page !== -1) ? `PAGE ${c.page}` : '';
+            return `
+              <div class="suggestion-citation-chip" data-doc-ref="${escapeHtml(ref)}" data-card-idx="${idx + 1}" title="Click to inspect ${escapeHtml(ref)} in Knowledge Base">
+                <svg class="chip-doc-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span class="chip-doc-id">${escapeHtml(ref)}</span>
+                ${pageText ? `<span class="chip-divider">|</span><span class="chip-page">${escapeHtml(pageText)}</span>` : ''}
+              </div>
+            `;
+          }).join('');
+
+          citationHtml = `
+            <div class="suggestion-card-citation-row">
+              ${badgesHtml}
+            </div>
+          `;
+        } else {
+          // Standard support protocol: clearly labeled, no fabricated document ID or page
+          citationHtml = `
+            <div class="suggestion-card-citation-row">
+              <div class="suggestion-citation-chip protocol-chip" title="Standard procedural verification (not derived from machine manual)">
+                <svg class="chip-doc-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span class="chip-protocol-text">STANDARD SUPPORT PROTOCOL</span>
+              </div>
             </div>
           `;
         }
 
-        card.innerHTML = contentHtml + sourceHtml;
+        card.innerHTML = contentHtml + citationHtml;
         suggestionStepsList.appendChild(card);
       });
     }
 
     // 3. Safety Warning Banner
     if (suggestionSafetyBox && suggestionSafetyText) {
-      if (parsed.safety) {
-        suggestionSafetyText.textContent = parsed.safety;
+      if (safety) {
+        suggestionSafetyText.textContent = safety;
         suggestionSafetyBox.classList.remove('hidden');
       } else {
         suggestionSafetyBox.classList.add('hidden');
@@ -1002,7 +1158,10 @@
     }
 
     // 4. Render Dynamic Suggested Questions (if any present)
-    renderSuggestedQuestions(parsed.questions);
+    renderSuggestedQuestions(questions);
+
+    // 5. Bind Interactive Bidirectional Highlighting
+    bindCitationHighlightEvents();
   }
 
   // --- Render Suggested Questions ---
@@ -1040,7 +1199,7 @@
   }
 
   // --- Render Knowledge Base Citations ---
-  function renderSourceCitations(sources) {
+  function renderSourceCitations(sources, suggestionSources) {
     if (!sourcesContainer || !sourcesList || !sourcesEmpty) return;
 
     const sourceList = Array.isArray(sources) ? sources : [];
@@ -1064,23 +1223,120 @@
 
       const docName = src.source_file || src.doc_id || 'Technical Manual';
       const docRef = src.document_reference || docName;
-      const pageStr = (src.page !== undefined && src.page !== null && src.page !== -1) ? `Page ${src.page}` : 'Reference';
-      const section = src.section || 'Technical Procedure';
+      card.setAttribute('data-doc-ref', docRef);
+
+      const pageStr = (src.page !== undefined && src.page !== null && src.page !== -1) ? `PAGE ${src.page}` : '';
+      const docTitle = src.title || src.section || 'Technical Documentation';
+      const sourceFile = src.source_file || '';
+      const rawExcerpt = src.excerpt || (src.text ? src.text.substring(0, 200) + '...' : '');
+      const excerpt = rawExcerpt.replace(/\s+/g, ' ').trim();
+
+      // Find which suggestions reference this document
+      let supported = Array.isArray(src.supported_suggestions) ? [...src.supported_suggestions] : [];
+      if (supported.length === 0 && Array.isArray(suggestionSources)) {
+        suggestionSources.forEach((rawItem, sIdx) => {
+          if (Array.isArray(rawItem)) {
+            if (rawItem.some(c => (typeof c === 'string' ? c === docRef : (c && (c.document_reference === docRef || c.doc_id === docRef))))) {
+              supported.push(sIdx + 1);
+            }
+          } else if (typeof rawItem === 'string' && rawItem === docRef) {
+            supported.push(sIdx + 1);
+          } else if (rawItem && typeof rawItem === 'object' && (rawItem.document_reference === docRef || rawItem.doc_id === docRef)) {
+            supported.push(sIdx + 1);
+          }
+        });
+      }
+      supported = Array.from(new Set(supported)).sort((a, b) => a - b);
+
+      let supportedBadge = '';
+      if (supported.length > 0) {
+        const numbers = supported.map(n => `#${String(n).padStart(2, '0')}`).join(', ');
+        supportedBadge = `<span class="source-supported-badge" title="Referenced by recommendation ${escapeHtml(numbers)}">Supports Suggestions ${escapeHtml(numbers)}</span>`;
+      } else {
+        supportedBadge = `<span class="source-context-badge" title="Retrieved for contextual background">Retrieved Context</span>`;
+      }
+
+      card.setAttribute('data-supported-cards', supported.join(','));
 
       card.innerHTML = `
-        <div class="source-icon">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-          </svg>
+        <div class="source-card-header">
+          <div class="source-ref-badge-group">
+            <svg class="source-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span class="source-ref-code">${escapeHtml(docRef)}</span>
+            ${pageStr ? `<span class="source-page-divider">|</span><span class="source-page-badge">${escapeHtml(pageStr)}</span>` : ''}
+          </div>
+          ${supportedBadge}
         </div>
-        <div class="source-details">
-          <span class="source-ref-code">${escapeHtml(docRef)}</span>
-          <span class="source-doc-title" title="${escapeHtml(section)}">${escapeHtml(section)}</span>
+        <div class="source-card-title-row">
+          <span class="source-doc-title" title="${escapeHtml(docTitle)}">${escapeHtml(docTitle)}</span>
+          ${sourceFile ? `<span class="source-file-badge" title="${escapeHtml(sourceFile)}">${escapeHtml(sourceFile)}</span>` : ''}
         </div>
-        <span class="source-page-badge">${escapeHtml(pageStr)}</span>
+        ${excerpt ? `<div class="source-excerpt" title="Retrieved knowledge excerpt">"${escapeHtml(excerpt)}"</div>` : ''}
       `;
       sourcesList.appendChild(card);
+    });
+
+    bindCitationHighlightEvents();
+  }
+
+  // --- Bind Bidirectional Citation Highlighting ---
+  function bindCitationHighlightEvents() {
+    // 1. Suggestion citation chip interactions
+    const chips = document.querySelectorAll('.suggestion-citation-chip[data-doc-ref]');
+    chips.forEach(chip => {
+      const docRef = chip.getAttribute('data-doc-ref');
+      if (!docRef) return;
+
+      chip.addEventListener('mouseenter', () => {
+        document.querySelectorAll(`.source-card[data-doc-ref="${CSS.escape(docRef)}"]`).forEach(c => c.classList.add('highlight-connected'));
+      });
+      chip.addEventListener('mouseleave', () => {
+        document.querySelectorAll(`.source-card[data-doc-ref="${CSS.escape(docRef)}"]`).forEach(c => c.classList.remove('highlight-connected'));
+      });
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetSource = document.querySelector(`.source-card[data-doc-ref="${CSS.escape(docRef)}"]`);
+        if (targetSource) {
+          targetSource.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          targetSource.classList.add('pulse-focus');
+          setTimeout(() => targetSource.classList.remove('pulse-focus'), 1200);
+        }
+      });
+    });
+
+    // 2. Source card interactions (highlights every suggestion card supported by this document)
+    const sourceCards = document.querySelectorAll('.source-card[data-doc-ref]');
+    sourceCards.forEach(card => {
+      const docRef = card.getAttribute('data-doc-ref');
+      if (!docRef) return;
+
+      card.addEventListener('mouseenter', () => {
+        document.querySelectorAll('.suggestion-card').forEach(sc => {
+          const refs = (sc.getAttribute('data-doc-refs') || sc.getAttribute('data-doc-ref') || '').split(',').map(r => r.trim());
+          if (refs.includes(docRef) || sc.querySelector(`.suggestion-citation-chip[data-doc-ref="${CSS.escape(docRef)}"]`)) {
+            sc.classList.add('highlight-connected');
+          }
+        });
+      });
+      card.addEventListener('mouseleave', () => {
+        document.querySelectorAll('.suggestion-card.highlight-connected').forEach(sc => sc.classList.remove('highlight-connected'));
+      });
+      card.addEventListener('click', () => {
+        const matchingCards = Array.from(document.querySelectorAll('.suggestion-card')).filter(sc => {
+          const refs = (sc.getAttribute('data-doc-refs') || sc.getAttribute('data-doc-ref') || '').split(',').map(r => r.trim());
+          return refs.includes(docRef) || sc.querySelector(`.suggestion-citation-chip[data-doc-ref="${CSS.escape(docRef)}"]`);
+        });
+        if (matchingCards.length > 0) {
+          matchingCards[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          matchingCards.forEach(mc => {
+            mc.classList.add('pulse-focus');
+            setTimeout(() => mc.classList.remove('pulse-focus'), 1200);
+          });
+        }
+      });
     });
   }
 
@@ -1273,4 +1529,7 @@
       connectWebSocket();
     }
   });
+
+  // Expose for testing & verification
+  window.handleSuggestionUpdate = handleSuggestionUpdate;
 })();
