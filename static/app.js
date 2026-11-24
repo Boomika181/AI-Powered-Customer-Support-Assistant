@@ -534,6 +534,10 @@
         handleSuggestionUpdate(payload);
         break;
 
+      case 'issue_resolved':
+        handleIssueResolved(payload);
+        break;
+
       case 'system_status':
         handleSystemStatus(payload);
         break;
@@ -742,8 +746,67 @@
   }
 
   // 5. Support Suggestion & Grounding Update (Primary Focus)
+  function handleIssueResolved(data) {
+    // 1. Clear previous suggestion action cards and render resolved confirmation
+    const cardsContainer = document.getElementById('suggestions-cards');
+    if (cardsContainer) {
+      cardsContainer.innerHTML = `
+        <div class="resolved-banner">
+          <svg class="w-6 h-6 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <h4 class="text-sm font-semibold text-emerald-400">Customer Issue Resolved</h4>
+            <p class="text-xs text-slate-300 mt-1">${(data && data.message) || (data && data.suggestion) || "The customer confirmed the problem has been resolved. Previous technical recommendations cleared."}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Clear previous source citations and active highlight state
+    renderSourceCitations([], []);
+
+    // 3. Clear summary, safety warning, and unverified details notice
+    const summaryEl = document.getElementById('suggestion-summary');
+    if (summaryEl) summaryEl.textContent = 'Issue confirmed resolved by customer.';
+
+    const safetyEl = document.getElementById('suggestion-safety');
+    if (safetyEl) safetyEl.classList.add('hidden');
+
+    const unverifiedNotice = document.getElementById('suggestion-unverified-notice');
+    if (unverifiedNotice) unverifiedNotice.classList.add('hidden');
+
+    if (ungroundedAlert) ungroundedAlert.classList.add('hidden');
+    if (suggestionsEmpty) suggestionsEmpty.classList.add('hidden');
+    if (suggestionContent) suggestionContent.classList.remove('hidden');
+
+    // 4. Update Grounding status badge to Issue Resolved
+    if (groundingBadge) {
+      groundingBadge.className = 'grounding-pill resolved';
+      groundingBadge.textContent = 'Issue Resolved';
+    }
+
+    // 5. Update confidence badge
+    if (suggestionConfidence) {
+      suggestionConfidence.textContent = '100% Resolved';
+      suggestionConfidence.classList.remove('hidden');
+    }
+
+    // 6. Update Subsystem statuses
+    updateSubsystemsState({
+      gemini: 'Ready',
+      rag: 'Idle'
+    });
+  }
+
   function handleSuggestionUpdate(data) {
     if (!data) return;
+
+    // Check if customer issue has been resolved
+    if (data.is_resolved === true || (data.has_issue === false && data.status === 'resolved')) {
+      handleIssueResolved(data);
+      return;
+    }
 
     // Check if an issue has been identified and suggestions are present
     const hasIssue = data.has_issue !== false;
@@ -776,29 +839,38 @@
     // Grounding Status Badge
     if (groundingBadge) {
       groundingBadge.className = 'grounding-pill';
-      if (data.is_grounded === true) {
-        groundingBadge.textContent = 'Grounded in Knowledge Base';
-        groundingBadge.classList.add('grounded');
-      } else {
+      if (data.is_grounded === false || data.evidence_status === 'insufficient') {
         groundingBadge.textContent = 'Insufficient Documentation';
         groundingBadge.classList.add('ungrounded');
+      } else if (data.evidence_status === 'partial') {
+        groundingBadge.textContent = 'Partially Grounded';
+        groundingBadge.classList.add('partial');
+      } else {
+        groundingBadge.textContent = 'Grounded in Knowledge Base';
+        groundingBadge.classList.add('grounded');
       }
     }
 
     // Confidence badge
     if (suggestionConfidence) {
-      if (typeof data.confidence === 'number') {
+      if (typeof data.confidence === 'number' && data.is_grounded !== false && data.evidence_status !== 'insufficient') {
         const pct = Math.round(data.confidence <= 1.0 ? data.confidence * 100 : data.confidence);
         suggestionConfidence.textContent = `${pct}% Grounding Conf`;
+        suggestionConfidence.classList.remove('hidden');
       } else {
         suggestionConfidence.textContent = '';
+        suggestionConfidence.classList.add('hidden');
       }
     }
 
     // Ungrounded Warning Banner
     if (ungroundedAlert) {
-      if (data.is_grounded === false) {
+      if (data.is_grounded === false || data.evidence_status === 'insufficient') {
         ungroundedAlert.classList.remove('hidden');
+        const alertP = ungroundedAlert.querySelector('p');
+        if (alertP) {
+          alertP.textContent = data.suggestion || "The available documentation does not contain verified resolution steps for this specific issue. Escalate to senior technical engineering.";
+        }
       } else {
         ungroundedAlert.classList.add('hidden');
       }
@@ -967,24 +1039,35 @@
       }
     });
 
-    // Enforce exactly 4 suggestion cards whenever an issue has been analyzed
-    const fallbackProceduralSteps = [
-      "Verify operating parameters: Confirm power supply, line voltages, and pneumatic pressure gauges match machine specifications.",
-      "Inspect documented safety status: Ensure all emergency stop circuits and guard interlocks are in a safe, normal operating state.",
-      "Check documentation & diagnostics: Review error history logs and cross-reference equipment schematics in the technical manual.",
-      "Escalate to technical engineering: Contact an authorized factory service technician if the fault persists after initial checks."
-    ];
+    // Enforce exactly 4 suggestion cards ONLY when sufficient supporting documentation exists
+    const isInsufficient = dataOrText && (dataOrText.is_grounded === false || dataOrText.evidence_status === 'insufficient');
+    const isPartial = dataOrText && dataOrText.evidence_status === 'partial';
 
-    while (uniqueActions.length < 4) {
-      const candidate = fallbackProceduralSteps.find(step => {
-        const normStep = step.toLowerCase().substring(0, 20);
-        return !uniqueActions.some(existing => existing.toLowerCase().includes(normStep));
-      }) || fallbackProceduralSteps[uniqueActions.length % fallbackProceduralSteps.length];
-      uniqueActions.push(candidate);
-    }
+    if (isInsufficient) {
+      // Strict grounding: Never generate technical cards or generic fallbacks when documentation is insufficient
+      uniqueActions.length = 0;
+    } else if (isPartial) {
+      // Partial documentation: preserve only explicitly supported actions, do NOT force 4 suggestions
+    } else {
+      // Sufficient documentation available: enforce exactly 4 distinct suggestions
+      const fallbackProceduralSteps = [
+        "Verify operating parameters: Confirm power supply, line voltages, and pneumatic pressure gauges match machine specifications.",
+        "Inspect documented safety status: Ensure all emergency stop circuits and guard interlocks are in a safe, normal operating state.",
+        "Check documentation & diagnostics: Review error history logs and cross-reference equipment schematics in the technical manual.",
+        "Escalate to technical engineering: Contact an authorized factory service technician if the fault persists after initial checks."
+      ];
 
-    if (uniqueActions.length > 4) {
-      uniqueActions.length = 4;
+      while (uniqueActions.length < 4 && uniqueActions.length > 0) {
+        const candidate = fallbackProceduralSteps.find(step => {
+          const normStep = step.toLowerCase().substring(0, 20);
+          return !uniqueActions.some(existing => existing.toLowerCase().includes(normStep));
+        }) || fallbackProceduralSteps[uniqueActions.length % fallbackProceduralSteps.length];
+        uniqueActions.push(candidate);
+      }
+
+      if (uniqueActions.length > 4) {
+        uniqueActions.length = 4;
+      }
     }
 
     const sourceList = Array.isArray(sources) ? sources : [];

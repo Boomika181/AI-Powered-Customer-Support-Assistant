@@ -979,6 +979,75 @@ class TestPipelineCoordinatorCombinedAnalysis(unittest.TestCase):
         sugg_events = [ev for ev in self.captured_events if ev["type"] == "suggestion_update"]
         self.assertEqual(len(sugg_events), 0)
 
+    def test_resolved_conversation_clears_stale_suggestions_and_emits_issue_resolved(self):
+        """12. When customer confirms issue is resolved after an active problem, issue_resolved event is emitted."""
+        state = ConversationState()
+
+        # Turn 1: Customer reports problem
+        self.mock_suggestion_fn.return_value = {
+            "has_issue": True,
+            "evidence_status": "sufficient",
+            "likely_issue": "Fan breaker fault",
+            "suggestions": ["Check breaker Q4.", "Inspect filter cartridge."],
+            "suggestion": "Check breaker Q4.",
+            "suggestion_sources": [[{"document_reference": "TS-WP400-3.1"}]],
+            "sources": [{"document_reference": "TS-WP400-3.1"}],
+            "confidence": 0.95,
+            "is_grounded": True
+        }
+        seg1 = state.add_final_segment(
+            "The extraction fan stopped.",
+            speaker="Customer",
+            raw_speaker="A"
+        )
+        self.coordinator._handle_speech_break(seg1, state)
+
+        sugg_events_turn1 = [ev for ev in self.captured_events if ev["type"] == "suggestion_update"]
+        self.assertEqual(len(sugg_events_turn1), 1)
+        self.assertTrue(sugg_events_turn1[0]["has_issue"])
+        self.assertEqual(len(sugg_events_turn1[0]["suggestions"]), 2)
+
+        # Turn 2: Customer confirms issue is resolved
+        self.mock_suggestion_fn.return_value = {
+            "has_issue": False,
+            "is_resolved": True,
+            "status": "resolved",
+            "likely_issue": "Issue Resolved",
+            "suggestions": [],
+            "suggestion": "",
+            "confidence": 1.0,
+            "is_grounded": True,
+            "sources": []
+        }
+        self.captured_events.clear()
+        seg2 = state.add_final_segment(
+            "That fixed it! The breaker was reset and everything is working great now. Thank you!",
+            speaker="Customer",
+            raw_speaker="A"
+        )
+        self.coordinator._handle_speech_break(seg2, state)
+
+        # suggestion_update MUST NOT be emitted (no new technical suggestions)
+        sugg_events_turn2 = [ev for ev in self.captured_events if ev["type"] == "suggestion_update"]
+        self.assertEqual(len(sugg_events_turn2), 0)
+
+        # issue_resolved event MUST be emitted to clear stale dashboard suggestions
+        resolved_events = [ev for ev in self.captured_events if ev["type"] == "issue_resolved"]
+        self.assertEqual(len(resolved_events), 1)
+        self.assertTrue(resolved_events[0]["is_resolved"])
+        self.assertFalse(resolved_events[0]["has_issue"])
+
+        # Turn 3: Agent speaks -> Verify speaker-role filtering
+        self.captured_events.clear()
+        seg3 = state.add_final_segment(
+            "Glad to hear that. Have a great day!",
+            speaker="Agent",
+            raw_speaker="B"
+        )
+        self.coordinator._handle_speech_break(seg3, state)
+        downstream_events = [ev for ev in self.captured_events if ev["type"] in ["suggestion_update", "issue_resolved"]]
+        self.assertEqual(len(downstream_events), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

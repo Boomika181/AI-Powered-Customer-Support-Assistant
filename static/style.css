@@ -1202,6 +1202,29 @@ html, body {
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
+.grounding-pill.partial {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.grounding-pill.resolved {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.resolved-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
 .grounding-pill.empty {
   background-color: rgba(100, 116, 139, 0.15);
   color: var(--text-muted);
@@ -1796,6 +1819,10 @@ html, body {
 [data-theme="light"] .category-badge.maintenance-parts { background-color: #f3e8ff; color: #6b21a8; }
 [data-theme="light"] .category-badge.technical-troubleshooting { background-color: #ede9fe; color: #5b21b6; }
 [data-theme="light"] .grounding-pill.grounded { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+[data-theme="light"] .grounding-pill.resolved { background-color: #d1fae5; color: #047857; border-color: #6ee7b7; font-weight: 700; }
+[data-theme="light"] .resolved-banner { background-color: #f0fdf4; border-color: #bbf7d0; }
+[data-theme="light"] .resolved-banner h4 { color: #15803d; }
+[data-theme="light"] .resolved-banner p { color: #374151; }
 [data-theme="light"] .grounding-pill.ungrounded { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
 [data-theme="light"] .sources-badge { background-color: #e0f2fe; color: #0284c7; border-color: #bae6fd; }
 [data-theme="light"] .turn-avatar.customer { background-color: #2563eb; color: #ffffff; }

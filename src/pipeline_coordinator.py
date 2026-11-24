@@ -485,7 +485,20 @@ class PipelineCoordinator:
                     "sources": sugg_res.get("sources", []),
                     "suggestion_sources": sugg_res.get("suggestion_sources", []),
                     "category": sugg_res.get("category"),
-                    "has_issue": True
+                    "has_issue": True,
+                    "is_resolved": False,
+                    "evidence_status": sugg_res.get("evidence_status", "sufficient"),
+                    "unverified_details": sugg_res.get("unverified_details", "")
+                })
+            elif sugg_res and not has_issue and sugg_res.get("is_resolved"):
+                logger.info("Customer confirmed issue is resolved; emitting issue_resolved event to clear stale suggestions.")
+                self.emit_event({
+                    "type": "issue_resolved",
+                    "status": "resolved",
+                    "has_issue": False,
+                    "is_resolved": True,
+                    "message": sugg_res.get("suggestion", "Customer confirmed the issue is resolved. Previous recommendations cleared."),
+                    "likely_issue": "Issue Resolved"
                 })
             else:
                 logger.info("No active customer issue identified or empty suggestions; skipping suggestion_update emission.")

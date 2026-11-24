@@ -434,8 +434,8 @@ class TestLLMSuggestions(unittest.TestCase):
         self.assertEqual(len(res["suggestions"]), 0)
         self.assertEqual(res["suggestion"], "")
 
-    def test_incomplete_information_with_empty_context_provides_safe_next_steps(self):
-        """Verifies incomplete info / empty context returns 4 safe distinct next steps without calling LLM."""
+    def test_incomplete_information_with_empty_context_suppresses_technical_suggestions(self):
+        """Verifies incomplete info / empty context suppresses technical suggestions and returns clear disclaimer."""
         res = generate_support_suggestion(
             conversation_text="Our machine stopped but no error code was displayed.",
             retrieved_context=[],
@@ -443,11 +443,12 @@ class TestLLMSuggestions(unittest.TestCase):
         )
 
         self.assertTrue(res["has_issue"])
-        self.assertEqual(len(res["suggestions"]), 4)
-        self.assertEqual(len(set(res["suggestions"])), 4)
+        self.assertEqual(len(res["suggestions"]), 0)
+        self.assertEqual(res["evidence_status"], "insufficient")
         self.assertFalse(res["is_grounded"])
         self.assertEqual(res["confidence"], 0.0)
-        self.assertEqual(res["suggestion_sources"], [[], [], [], []])
+        self.assertEqual(res["suggestion_sources"], [])
+        self.assertIn("I couldn't find sufficient information about this issue", res["suggestion"])
 
     @patch("src.llm_suggestions.genai.Client")
     def test_single_and_multiple_citations_per_suggestion(self, mock_client_cls):
@@ -589,6 +590,107 @@ class TestLLMSuggestions(unittest.TestCase):
         citation = res["suggestion_sources"][0][0]
         self.assertEqual(citation["document_reference"], "DOC-SPARSE-01")
         self.assertEqual(citation["page"], -1)  # preserved as -1, not fabricated
+
+    # --------------------------------------------------------------------------
+    # 15. Resolved Confirmation & Technical Vocabulary Variations
+    # --------------------------------------------------------------------------
+    def test_positive_customer_confirmation_with_resolved_cues(self):
+        """Verifies that positive customer confirmation sets has_issue=False and is_resolved=True with 0 suggestions."""
+        res = generate_support_suggestion(
+            conversation_text="That fixed it! The breaker had tripped and it is working great now. Thank you!",
+            retrieved_context=self.sample_context,
+            api_key="test-key"
+        )
+        self.assertFalse(res["has_issue"])
+        self.assertTrue(res.get("is_resolved"))
+        self.assertEqual(res.get("status"), "resolved")
+        self.assertEqual(len(res["suggestions"]), 0)
+        self.assertEqual(res["suggestion"], "")
+
+    def test_technical_vocabulary_variation_matching(self):
+        """Verifies legitimate technical terminology variations and abbreviations pass the relevance gate."""
+        from src.llm_suggestions import _evaluate_context_relevance
+
+        context = [
+            {
+                "text": "Dust extraction hood requires 20 m/s air velocity. Check fan breaker Q4 in electrical cabinet. Clean or replace filter cartridge WP4-FL-DE1.",
+                "metadata": {
+                    "document_reference": "UM-WP400-1.1.3",
+                    "machine": "WP-400",
+                    "page": 2
+                }
+            }
+        ]
+
+        # 1. "swap" -> replace, "filtration element" -> filter cartridge
+        rel1 = _evaluate_context_relevance("How do I swap the filtration element?", context)
+        self.assertTrue(rel1["is_relevant"])
+
+        # 2. "cb" -> breaker, "blower" -> fan, "tripped" -> trip
+        rel2 = _evaluate_context_relevance("The cb tripped on the extraction blower.", context)
+        self.assertTrue(rel2["is_relevant"])
+
+        # 3. "suction velocity" -> extraction velocity
+        rel3 = _evaluate_context_relevance("Suction velocity dropped at the hood.", context)
+        self.assertTrue(rel3["is_relevant"])
+
+    def test_unrelated_queries_rejected_by_relevance_gate(self):
+        """Verifies unrelated non-industrial queries are rejected with semantic_domain_mismatch."""
+        from src.llm_suggestions import _evaluate_context_relevance
+
+        context = [
+            {
+                "text": "Dust extraction hood requires 20 m/s air velocity. Check fan breaker Q4 in electrical cabinet. Clean or replace filter cartridge WP4-FL-DE1.",
+                "metadata": {
+                    "document_reference": "UM-WP400-1.1.3",
+                    "machine": "WP-400",
+                    "page": 2
+                }
+            }
+        ]
+
+        # Out-of-domain: cookies
+        rel1 = _evaluate_context_relevance("Can you give me the best recipe for baking chocolate chip cookies?", context)
+        self.assertFalse(rel1["is_relevant"])
+        self.assertEqual(rel1["reason"], "semantic_domain_mismatch")
+
+        # Out-of-domain: weather
+        rel2 = _evaluate_context_relevance("What is the weather forecast in Paris tomorrow morning?", context)
+        self.assertFalse(rel2["is_relevant"])
+        self.assertEqual(rel2["reason"], "semantic_domain_mismatch")
+
+    def test_resolution_detection_edge_cases(self):
+        """
+        Verifies that customer resolution detection does NOT incorrectly resolve:
+          1. Questions (e.g. 'Is it resolved?')
+          2. Mixed messages with remaining issues
+          3. Agent-only utterances
+        And ONLY confirms genuine customer resolution confirmations.
+        """
+        from src.llm_suggestions import _is_positive_no_issue
+
+        # 1. Questions MUST NOT resolve
+        self.assertFalse(_is_positive_no_issue("Is it resolved?"))
+        self.assertFalse(_is_positive_no_issue("Is the problem resolved?"))
+        self.assertFalse(_is_positive_no_issue("Has the issue been fixed yet?"))
+        self.assertFalse(_is_positive_no_issue("Did that fix it?"))
+        self.assertFalse(_is_positive_no_issue("Can you check if it is resolved?"))
+
+        # 2. Mixed messages with remaining issues MUST NOT resolve
+        self.assertFalse(_is_positive_no_issue("That fixed it, but now error E-102 is showing."))
+        self.assertFalse(_is_positive_no_issue("The breaker is reset, however the motor is overheating."))
+        self.assertFalse(_is_positive_no_issue("That fixed the fan, but the saw blade still won't turn."))
+        self.assertFalse(_is_positive_no_issue("Problem is resolved, but I have another issue with the pressure."))
+
+        # 3. Agent-only utterances MUST NOT resolve as customer confirmations
+        self.assertFalse(_is_positive_no_issue("Agent: I have resolved the issue for you."))
+        self.assertFalse(_is_positive_no_issue("Agent: That fixed it! Have a great day."))
+        self.assertFalse(_is_positive_no_issue("Support: Everything is running fine now."))
+
+        # 4. Genuine customer confirmations MUST resolve
+        self.assertTrue(_is_positive_no_issue("That fixed it! The breaker had tripped and it is working great now. Thank you!"))
+        self.assertTrue(_is_positive_no_issue("Thank you so much! Everything is running smoothly now, we appreciate the help."))
+        self.assertTrue(_is_positive_no_issue("Customer: That fixed it! Everything is working great now.\nAgent: Glad to help!"))
 
 
 if __name__ == "__main__":
